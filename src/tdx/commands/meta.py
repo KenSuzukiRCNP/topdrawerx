@@ -58,11 +58,26 @@ def cmd_show(ctx: Context, args: list[Token]) -> None:
     ctx.say(
         f"style   symbol={style.symbol} size={style.size:g} color={style.color} "
         f"pattern={style.dash} width={style.width:g} fill={'on' if style.fill else 'off'} "
-        f"font={style.font}"
+        f"hatch={style.hatch} font={style.font}"
+    )
+    ticks, labels = state.ticks, state.labels
+    ctx.say(
+        f"ticks   size={ticks.size:g}in long={ticks.long:g} {ticks.direction} "
+        f"on={_sides(ticks.on)}"
+    )
+    ctx.say(
+        f"labels  size={labels.size:g}pt on={_sides(labels.on)}"
+        if labels.size
+        else f"labels  size=default on={_sides(labels.on)}"
     )
     if state.titles:
         for slot, text in state.titles.items():
             ctx.say(f"title   {slot:<6} {text!r}")
+
+
+def _sides(on: dict[str, bool]) -> str:
+    live = [side.lower() for side, enabled in on.items() if enabled]
+    return "+".join(live) if live else "none"
 
 
 def _fmt(axis) -> str:

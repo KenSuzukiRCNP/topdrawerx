@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from ..display import ErrorBars, Frame, Markers, Polyline
+from ..display import Arrow, Box, ErrorBars, Frame, Markers, Polygon, Polyline, Text
 from ..text import to_matplotlib
 
 #: TopDrawer-ish page: a little wider than tall, generous margins.
@@ -68,6 +68,20 @@ DASHES = {
     "dotdash": "-.",
 }
 
+HATCHES = {
+    "none": None,
+    "diagonal": "//",
+    "backdiagonal": "\\\\",
+    "cross": "xx",
+    "horizontal": "--",
+    "vertical": "||",
+    "dots": "..",
+    "dense": "////",
+}
+
+#: Tick sizes are given in inches, as on the plotter; matplotlib wants points.
+POINTS_PER_INCH = 72.0
+
 
 def marker_for(symbol: str) -> str:
     return SYMBOLS.get(symbol.lower(), "o")
@@ -81,6 +95,33 @@ def apply_style() -> None:
     import matplotlib as mpl
 
     mpl.rcParams.update(RC_PARAMS)
+
+
+def apply_axis_furniture(frame: Frame, ax) -> None:
+    """Ticks and numeric labels, from ``SET TICKS`` and ``SET LABELS``."""
+    ticks, labels = frame.ticks, frame.labels
+    short = ticks.size * POINTS_PER_INCH
+    sides = {
+        "top": ticks.on.get("TOP", True),
+        "bottom": ticks.on.get("BOTTOM", True),
+        "left": ticks.on.get("LEFT", True),
+        "right": ticks.on.get("RIGHT", True),
+    }
+    ax.tick_params(
+        which="major",
+        direction=ticks.direction,
+        length=short * ticks.long,
+        **sides,
+    )
+    ax.tick_params(which="minor", direction=ticks.direction, length=short, **sides)
+    ax.tick_params(
+        which="both",
+        labeltop=labels.on.get("TOP", False),
+        labelbottom=labels.on.get("BOTTOM", True),
+        labelleft=labels.on.get("LEFT", True),
+        labelright=labels.on.get("RIGHT", False),
+        **({"labelsize": labels.size} if labels.size else {}),
+    )
 
 
 def draw_frame(frame: Frame, ax) -> None:
@@ -122,6 +163,57 @@ def draw_frame(frame: Frame, ax) -> None:
                 elinewidth=item.width,
                 capsize=0,
             )
+        elif isinstance(item, Polygon):
+            ax.fill(
+                item.x,
+                item.y,
+                facecolor=item.facecolor or "none",
+                edgecolor=item.color,
+                linewidth=item.width,
+                linestyle=dash_for(item.dash),
+                hatch=HATCHES.get(item.hatch),
+            )
+        elif isinstance(item, Box):
+            from matplotlib.patches import Rectangle
+
+            ax.add_patch(
+                Rectangle(
+                    (item.x0, item.y0),
+                    item.x1 - item.x0,
+                    item.y1 - item.y0,
+                    facecolor=item.facecolor or "none",
+                    edgecolor=item.color,
+                    linewidth=item.width,
+                    linestyle=dash_for(item.dash),
+                    hatch=HATCHES.get(item.hatch),
+                )
+            )
+        elif isinstance(item, Arrow):
+            ax.annotate(
+                "",
+                xy=(item.x1, item.y1),
+                xytext=(item.x0, item.y0),
+                arrowprops={
+                    "arrowstyle": "-|>" if item.head else "-",
+                    "color": item.color,
+                    "linewidth": item.width,
+                    "shrinkA": 0,
+                    "shrinkB": 0,
+                },
+            )
+        elif isinstance(item, Text):
+            ax.text(
+                item.x,
+                item.y,
+                to_matplotlib(item.text),
+                fontsize=item.size,
+                rotation=item.angle,
+                color=item.color,
+                ha=item.align,
+                va="baseline",
+                fontfamily=frame.font,
+                transform=ax.transAxes if item.frame_coords else ax.transData,
+            )
 
     xlim, ylim = frame.resolved_limits()
     if frame.xlog:
@@ -139,6 +231,8 @@ def draw_frame(frame: Frame, ax) -> None:
         ax.xaxis.set_major_locator(MaxNLocator(steps=[1, 2, 5, 10]))
     if not frame.ylog:
         ax.yaxis.set_major_locator(MaxNLocator(steps=[1, 2, 5, 10]))
+
+    apply_axis_furniture(frame, ax)
 
     titles = frame.titles
     font = {"fontfamily": frame.font}

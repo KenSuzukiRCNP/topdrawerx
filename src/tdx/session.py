@@ -39,10 +39,11 @@ class Context:
     warnings: list[str] = field(default_factory=list)
     messages: list[str] = field(default_factory=list)
     lineno: int | None = None
-    #: The title most recently given, as ``(slot, prefix, raw text)``.  CASE
-    #: and MORE act on it, and only on it — as in the original, where a CASE
-    #: line had to sit directly under its string.
-    last_title: tuple[str, str, str] | None = None
+    #: The title most recently given, as ``(target, prefix, raw text)``, where
+    #: the target is a frame side or a placed text item.  CASE and MORE act on
+    #: it, and only on it — as in the original, where a CASE line had to sit
+    #: directly under its string.
+    last_title: tuple[object, str, str] | None = None
 
     @property
     def frame(self) -> Frame:

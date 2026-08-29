@@ -99,6 +99,26 @@
           ]
         }
       ],
+      "labels": {
+        "on": {
+          "BOTTOM": true,
+          "LEFT": true,
+          "RIGHT": false,
+          "TOP": false
+        },
+        "size": null
+      },
+      "ticks": {
+        "direction": "in",
+        "long": 3.0,
+        "on": {
+          "BOTTOM": true,
+          "LEFT": true,
+          "RIGHT": true,
+          "TOP": true
+        },
+        "size": 0.1
+      },
       "titles": {
         "BOTTOM": "p$_{K^-}$  (GeV/c)",
         "LEFT": "σ  (μb)",
@@ -199,6 +219,26 @@
           ]
         }
       ],
+      "labels": {
+        "on": {
+          "BOTTOM": true,
+          "LEFT": true,
+          "RIGHT": false,
+          "TOP": false
+        },
+        "size": null
+      },
+      "ticks": {
+        "direction": "in",
+        "long": 3.0,
+        "on": {
+          "BOTTOM": true,
+          "LEFT": true,
+          "RIGHT": true,
+          "TOP": true
+        },
+        "size": 0.1
+      },
       "titles": {
         "BOTTOM": "bin centre",
         "LEFT": "counts",

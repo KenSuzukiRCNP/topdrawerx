@@ -157,12 +157,36 @@ and `PLOT`. Symbol names: circle, square, triangle, invtriangle, diamond,
 cross, diagcross, plus, star, dot, octagon, fancydiamond, fancysquare,
 fancycross, fancydiagcross, none.
 
+**M3** — axis furniture, annotations and fills:
+
+```
+SET TICKS SIZE 0.06 LONG 3 OUT        length in inches, ratio of major to minor
+SET TICKS TOP OFF RIGHT OFF           ALL | X | Y | TOP | BOTTOM | LEFT | RIGHT
+SET LABELS SIZE 11 PERMANENT          points; PERMANENT survives NEW FRAME
+SET HATCH DIAGONAL                    none diagonal backdiagonal cross
+                                      horizontal vertical dots dense
+TITLE 1.0 13.6 'preliminary' SIZE 13 ANGLE 30 CENTER
+TITLE FRAME 0.72 0.06 'run 42'        0-1 across the frame
+BOX 2 1 4 3 FILL                      a rectangle
+BOX                                   one per data point from DX/DY —
+                                      systematic error boxes
+ARROW 1 8 3 6.5 NOHEAD                an arrow
+ARROW DOWN LENGTH 1.4                 one from each data point — upper limits
+HISTOGRAM FILL                        filled or hatched to the baseline
+```
+
+`examples/annotate.tdx` uses all of it. `SIZE=0.06` also works: `=` is treated
+as a separator, so `SET TICKS SIZE=0.06` from an old file parses.
+
+The per-data-point forms of `BOX` and `ARROW` are the point of those commands:
+systematic error boxes and upper limits are ordinary requests in a physics
+figure and tedious everywhere else.
+
 ## Next
 
-- **M3** — ticks and labels (`SET TICKS`, `SET LABELS`), annotations (text at
-  data coordinates, `BOX`, `ARROW`), fill and hatch patterns.
 - **M4** — `ZONE` and `SET WINDOW` (multi-panel pages), colour palettes for
-  multi-dataset plots, `IF`/`ELSE`, `SET FILE INPUT` (include), macros.
+  multi-dataset plots, `CIRCLE`/`ELLIPSE`, `IF`/`ELSE`, `SET FILE INPUT`
+  (include), macros.
 - **M5** — file-watch mode, a Jupyter cell magic, numpy datasets from the
   Python API.
 

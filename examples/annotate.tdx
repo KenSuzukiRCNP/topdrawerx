@@ -1,0 +1,42 @@
+! annotate.tdx -- milestone 3: axis furniture and things drawn on the frame.
+!     tdx examples/annotate.tdx -o annotate.pdf
+
+TITLE TOP 'statistical bars, systematic boxes, upper limits'
+TITLE LEFT 'σ  (μb)'
+TITLE BOTTOM 'p  (GeV/c)'
+SET LIMITS X FROM 0 TO 20 Y FROM 0 TO 15
+
+SET TICKS SIZE 0.06 LONG 3
+SET LABELS SIZE 11
+
+! measured points with statistical errors
+SET ORDER X Y DY
+ 4.0   3.6   0.5
+ 6.0   6.2   0.6
+ 8.0   8.4   0.7
+10.0   9.7   0.8
+12.0  10.3   0.9
+PLOT
+
+! the same points again, systematics as hatched boxes
+SET HATCH DIAGONAL
+SET ORDER X Y DX DY
+ 4.0   3.6   0.5   0.9
+ 6.0   6.2   0.5   1.0
+ 8.0   8.4   0.5   1.1
+10.0   9.7   0.5   1.2
+12.0  10.3   0.5   1.3
+BOX
+
+! two upper limits: a marker and an arrow pointing down
+SET HATCH NONE
+SET SYMBOL DOT
+SET ORDER X Y
+14.0  12.2
+16.0  11.4
+PLOT
+ARROW DOWN LENGTH 1.4
+
+! a note on the plot, and a label in frame coordinates
+TITLE 1.0 13.6 'preliminary' SIZE 13
+TITLE FRAME 0.72 0.06 'tdx 0.3'

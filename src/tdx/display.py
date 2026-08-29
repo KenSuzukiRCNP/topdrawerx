@@ -10,14 +10,15 @@ Two things fall out of that:
   instead of comparing PNGs pixel by pixel.
 
 Keep this vocabulary small.  If a new command needs a new primitive, that is a
-design decision worth making explicitly.
+design decision worth making explicitly.  Every primitive answers
+:meth:`points`, which is all the automatic-limit code needs to know about it.
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from .state import TITLE_SLOTS, State
+from .state import Labels, State, TITLE_SLOTS, Ticks
 
 
 @dataclass
@@ -28,6 +29,9 @@ class Polyline:
     width: float = 1.2
     dash: str = "solid"
     kind: str = field(default="polyline", init=False)
+
+    def points(self) -> tuple[list[float], list[float]]:
+        return list(self.x), list(self.y)
 
     def to_dict(self) -> dict:
         return {
@@ -49,6 +53,9 @@ class Markers:
     color: str = "black"
     fill: bool = False
     kind: str = field(default="markers", init=False)
+
+    def points(self) -> tuple[list[float], list[float]]:
+        return list(self.x), list(self.y)
 
     def to_dict(self) -> dict:
         return {
@@ -72,6 +79,16 @@ class ErrorBars:
     width: float = 1.0
     kind: str = field(default="errorbars", init=False)
 
+    def points(self) -> tuple[list[float], list[float]]:
+        xs: list[float] = []
+        ys: list[float] = []
+        for i, (px, py) in enumerate(zip(self.x, self.y)):
+            ex = self.dx[i] if self.dx else 0.0
+            ey = self.dy[i] if self.dy else 0.0
+            xs.extend([px - ex, px + ex])
+            ys.extend([py - ey, py + ey])
+        return xs, ys
+
     def to_dict(self) -> dict:
         return {
             "kind": self.kind,
@@ -84,7 +101,132 @@ class ErrorBars:
         }
 
 
-Item = Polyline | Markers | ErrorBars
+@dataclass
+class Polygon:
+    """A closed, optionally filled area — a filled histogram, a band."""
+
+    x: list[float]
+    y: list[float]
+    color: str = "black"
+    width: float = 1.2
+    dash: str = "solid"
+    facecolor: str | None = None
+    hatch: str = "none"
+    kind: str = field(default="polygon", init=False)
+
+    def points(self) -> tuple[list[float], list[float]]:
+        return list(self.x), list(self.y)
+
+    def to_dict(self) -> dict:
+        return {
+            "kind": self.kind,
+            "x": list(self.x),
+            "y": list(self.y),
+            "color": self.color,
+            "width": self.width,
+            "dash": self.dash,
+            "facecolor": self.facecolor,
+            "hatch": self.hatch,
+        }
+
+
+@dataclass
+class Box:
+    """A rectangle in data coordinates."""
+
+    x0: float
+    y0: float
+    x1: float
+    y1: float
+    color: str = "black"
+    width: float = 1.2
+    dash: str = "solid"
+    facecolor: str | None = None
+    hatch: str = "none"
+    kind: str = field(default="box", init=False)
+
+    def points(self) -> tuple[list[float], list[float]]:
+        return [self.x0, self.x1], [self.y0, self.y1]
+
+    def to_dict(self) -> dict:
+        return {
+            "kind": self.kind,
+            "x0": self.x0,
+            "y0": self.y0,
+            "x1": self.x1,
+            "y1": self.y1,
+            "color": self.color,
+            "width": self.width,
+            "dash": self.dash,
+            "facecolor": self.facecolor,
+            "hatch": self.hatch,
+        }
+
+
+@dataclass
+class Arrow:
+    """An arrow from (x0, y0) to (x1, y1) in data coordinates."""
+
+    x0: float
+    y0: float
+    x1: float
+    y1: float
+    color: str = "black"
+    width: float = 1.2
+    head: bool = True
+    kind: str = field(default="arrow", init=False)
+
+    def points(self) -> tuple[list[float], list[float]]:
+        return [self.x0, self.x1], [self.y0, self.y1]
+
+    def to_dict(self) -> dict:
+        return {
+            "kind": self.kind,
+            "x0": self.x0,
+            "y0": self.y0,
+            "x1": self.x1,
+            "y1": self.y1,
+            "color": self.color,
+            "width": self.width,
+            "head": self.head,
+        }
+
+
+@dataclass
+class Text:
+    """Text at a point, in data coordinates unless *frame* coordinates are asked
+    for (0-1 across the frame), which is how a legend line gets placed."""
+
+    x: float
+    y: float
+    text: str
+    size: float | None = None
+    angle: float = 0.0
+    color: str = "black"
+    align: str = "left"
+    frame_coords: bool = False
+    kind: str = field(default="text", init=False)
+
+    def points(self) -> tuple[list[float], list[float]]:
+        if self.frame_coords:
+            return [], []
+        return [self.x], [self.y]
+
+    def to_dict(self) -> dict:
+        return {
+            "kind": self.kind,
+            "x": self.x,
+            "y": self.y,
+            "text": self.text,
+            "size": self.size,
+            "angle": self.angle,
+            "color": self.color,
+            "align": self.align,
+            "frame_coords": self.frame_coords,
+        }
+
+
+Item = Polyline | Markers | ErrorBars | Polygon | Box | Arrow | Text
 
 
 @dataclass
@@ -98,6 +240,8 @@ class Frame:
     ylog: bool = False
     titles: dict[str, str] = field(default_factory=dict)
     font: str = "serif"
+    ticks: Ticks = field(default_factory=Ticks)
+    labels: Labels = field(default_factory=Labels)
 
     def add(self, item: Item) -> None:
         self.items.append(item)
@@ -118,19 +262,17 @@ class Frame:
         self.ylog = state.y.log
         self.titles = {k: v for k, v in state.titles.items() if k in TITLE_SLOTS}
         self.font = state.style.font
+        self.ticks = state.ticks.copy()
+        self.labels = state.labels.copy()
 
     # -- limits ---------------------------------------------------------
     def data_bounds(self) -> tuple[float, float, float, float] | None:
         xs: list[float] = []
         ys: list[float] = []
         for item in self.items:
-            dx = getattr(item, "dx", None)
-            dy = getattr(item, "dy", None)
-            for i, (px, py) in enumerate(zip(item.x, item.y)):
-                ex = dx[i] if dx else 0.0
-                ey = dy[i] if dy else 0.0
-                xs.extend([px - ex, px + ex])
-                ys.extend([py - ey, py + ey])
+            ix, iy = item.points()
+            xs.extend(ix)
+            ys.extend(iy)
         if not xs or not ys:
             return None
         return min(xs), max(xs), min(ys), max(ys)
@@ -153,6 +295,8 @@ class Frame:
             "auto_ylim": self.ylim is None,
             "titles": dict(self.titles),
             "font": self.font,
+            "ticks": self.ticks.to_dict(),
+            "labels": self.labels.to_dict(),
             "items": [item.to_dict() for item in self.items],
         }
 

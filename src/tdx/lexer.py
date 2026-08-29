@@ -123,12 +123,22 @@ def tokenize(text: str, lineno: int | None = None) -> list[Token]:
         while i < n and not text[i].isspace() and text[i] != "," and text[i] not in QUOTES:
             i += 1
         word = text[start:i]
-        value = parse_number(word)
-        if value is None:
-            tokens.append(Token(TokKind.WORD, word))
-        else:
-            tokens.append(Token(TokKind.NUMBER, word, value))
+        # Old files write SIZE=0.1 and ANGLE=90; '=' is just a separator, so
+        # split it here and no command has to think about it.
+        if "=" in word and not word.startswith("="):
+            for part in word.split("="):
+                if part:
+                    tokens.append(_word_or_number(part))
+            continue
+        tokens.append(_word_or_number(word))
     return tokens
+
+
+def _word_or_number(word: str) -> Token:
+    value = parse_number(word)
+    if value is None:
+        return Token(TokKind.WORD, word)
+    return Token(TokKind.NUMBER, word, value)
 
 
 def scan_line(raw: str, lineno: int | None = None) -> Line:

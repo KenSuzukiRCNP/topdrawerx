@@ -16,6 +16,17 @@ from ._util import choice, numbers, strip_noise
 
 DASH_NAMES = ("SOLID", "DASHES", "DOTS", "DOTDASH")
 
+HATCH_NAMES = (
+    "NONE",
+    "DIAGONAL",
+    "BACKDIAGONAL",
+    "CROSS",
+    "HORIZONTAL",
+    "VERTICAL",
+    "DOTS",
+    "DENSE",
+)
+
 
 def symbol_from(word: str) -> str:
     """Resolve a symbol given as a legacy code (``5O``) or by name."""
@@ -154,6 +165,17 @@ def set_width(ctx: Context, args: list[Token]) -> None:
     if len(nums) != 1:
         raise ArgumentError("SET WIDTH needs one number")
     ctx.state.style.width = nums[0]
+
+
+@SETTERS.define("HATCH", min_abbrev=3, usage="SET HATCH NONE|DIAGONAL|CROSS|DOTS|...")
+def set_hatch(ctx: Context, args: list[Token]) -> None:
+    """Choose the shading pattern for filled areas (BOX, HISTOGRAM FILL)."""
+    words = [t.text for t in args if t.is_word]
+    if not words:
+        raise ArgumentError(
+            "SET HATCH needs a pattern: " + ", ".join(h.lower() for h in HATCH_NAMES)
+        )
+    ctx.state.style.hatch = choice(words[0], HATCH_NAMES, "hatch")
 
 
 @SETTERS.define("FILL", min_abbrev=3, usage="SET FILL ON|OFF")

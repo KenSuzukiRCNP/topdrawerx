@@ -119,7 +119,7 @@ def test_script_round_trips():
     assert again.frame.to_dict() == session.frame.to_dict()
 
 
-LEGACY = "SET ORDER X Y\n1 2\n2 4\nZONE 2 2\nSET TICKS SIZE 0.1\nPLOT\n"
+LEGACY = "SET ORDER X Y\n1 2\n2 4\nZONE 2 2\nSET SHADE 3\nPLOT\n"
 
 
 def test_lenient_run_skips_what_it_cannot_do():
@@ -128,7 +128,7 @@ def test_lenient_run_skips_what_it_cannot_do():
     session.run(LEGACY, lenient=True)
     assert len(session.skipped) == 2
     assert "unknown command 'ZONE'" in session.skipped[0]
-    assert "unknown SET property 'TICKS'" in session.skipped[1]
+    assert "unknown SET property 'SHADE'" in session.skipped[1]
     assert session.script().count("! tdx skipped") == 2
     assert len(session.frame.items) == 1
 
