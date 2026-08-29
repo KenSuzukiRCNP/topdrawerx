@@ -19,6 +19,7 @@ comment, and `!` or `;` also start one part-way along a line.
 | **CASE**<br>`CASE '<case letters>'` | Apply legacy per-character character sets to the title just given. |
 | **CLE**AR<br>`CLEAR` | Start a new frame keeping every setting, titles included. |
 | **EXI**T<br>`EXIT` | Leave the program. |
+| **FIT**<br>`FIT LINE\|POLY <n>\|GAUSSIAN\|EXPONENTIAL [FROM <x> TO <x>] [POINTS <n>] [NODRAW]` | Fit a curve to the data, draw it, and report the parameters. |
 | **FLU**SH<br>`FLUSH` | Throw away the data accumulated so far without drawing it. |
 | **HEL**P<br>`HELP [<command>]` | List the commands, or explain one of them. |
 | **HIST**OGRAM<br>`HISTOGRAM [FILL]` | Draw the data as a step histogram; X values are bin centres. |
@@ -34,6 +35,7 @@ comment, and `!` or `;` also start one part-way along a line.
 | **SAV**E<br>`SAVE '<file.pdf\|.png\|.svg\|.tdx>' \| SAVE STYLE '<name>'` | Write the figure, the session as a runnable script, or the current style. |
 | **SET**<br>`SET <property> <value> ...` | Change a graphics setting. |
 | **SHO**W<br>`SHOW` | Show the current settings. |
+| **SPL**INE<br>`SPLINE [POINTS <n>]` | Draw a smooth curve through the data points. |
 | **STO**P<br>`STOP` | Leave the program (the original's word for it). |
 | **TIT**LE<br>`TITLE [TOP\|BOTTOM\|LEFT\|RIGHT] '<text>' \| TITLE [FRAME] <x> <y> '<text>' [ANGLE n] [SIZE n] [CENTER]` | Label a side of the frame, or put text at a point on it. |
 | **UND**O<br>`UNDO` | Remove the last command. |

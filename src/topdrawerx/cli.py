@@ -67,6 +67,8 @@ def main(argv: list[str] | None = None) -> int:
         print(f"error: {exc}", file=sys.stderr)
         return 1
 
+    for message in session.messages:
+        print(message)
     for skipped in session.skipped:
         print(f"skipped: {skipped}", file=sys.stderr)
     for warning in session.warnings:

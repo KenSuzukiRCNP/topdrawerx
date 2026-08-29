@@ -42,14 +42,16 @@ def _parse_sides(
     what: str,
     numbers: dict[str, str],
     extra: dict[str, tuple[str, str]] | None = None,
-) -> None:
+) -> bool:
     """Shared parser for SET TICKS / SET LABELS.
 
     *numbers* maps a qualifier that takes a number (``SIZE``) to the attribute
     it sets; *extra* maps a bare qualifier (``IN``) to (attribute, value).
+    Returns whether PERMANENT was given.
     """
     pending: list[str] = []
     pending_number: str | None = None
+    permanent = False
 
     def apply(switch: bool) -> None:
         for side in pending or SIDES:
@@ -76,7 +78,7 @@ def _parse_sides(
             apply(word == "ON")
             continue
         if word == "PERMANENT":
-            target.permanent = True
+            permanent = True
             continue
         if extra and word in extra:
             attribute, value = extra[word]
@@ -89,6 +91,7 @@ def _parse_sides(
     if pending:
         # "SET TICKS TOP" with no ON/OFF reads as turning it on.
         apply(True)
+    return permanent
 
 
 @SETTERS.define(
@@ -100,7 +103,7 @@ def set_ticks(ctx: Context, args: list[Token]) -> None:
     """Size, direction and per-side switching of the tick marks."""
     if not args:
         raise ArgumentError("SET TICKS needs something to set, e.g. SET TICKS SIZE 0.08")
-    _parse_sides(
+    permanent = _parse_sides(
         ctx,
         args,
         ctx.state.ticks,
@@ -108,6 +111,8 @@ def set_ticks(ctx: Context, args: list[Token]) -> None:
         numbers={"SIZE": "size", "LONG": "long"},
         extra={"IN": ("direction", "in"), "OUT": ("direction", "out")},
     )
+    if permanent:
+        ctx.state.ticks_base = ctx.state.ticks.copy()
 
 
 @SETTERS.define(
@@ -119,10 +124,12 @@ def set_labels(ctx: Context, args: list[Token]) -> None:
     """Size and per-side switching of the numeric axis labels."""
     if not args:
         raise ArgumentError("SET LABELS needs something to set, e.g. SET LABELS SIZE 11")
-    _parse_sides(
+    permanent = _parse_sides(
         ctx,
         args,
         ctx.state.labels,
         what="LABELS",
         numbers={"SIZE": "size"},
     )
+    if permanent:
+        ctx.state.labels_base = ctx.state.labels.copy()

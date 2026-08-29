@@ -74,10 +74,9 @@ class Ticks:
     on: dict[str, bool] = field(
         default_factory=lambda: {"TOP": True, "BOTTOM": True, "LEFT": True, "RIGHT": True}
     )
-    permanent: bool = False
 
     def copy(self) -> "Ticks":
-        return Ticks(self.size, self.long, self.direction, dict(self.on), self.permanent)
+        return Ticks(self.size, self.long, self.direction, dict(self.on))
 
     def to_dict(self) -> dict:
         return {
@@ -96,10 +95,9 @@ class Labels:
     on: dict[str, bool] = field(
         default_factory=lambda: {"TOP": False, "BOTTOM": True, "LEFT": True, "RIGHT": False}
     )
-    permanent: bool = False
 
     def copy(self) -> "Labels":
-        return Labels(self.size, dict(self.on), self.permanent)
+        return Labels(self.size, dict(self.on))
 
     def to_dict(self) -> dict:
         return {"size": self.size, "on": dict(self.on)}
@@ -154,6 +152,11 @@ class State:
     style: Style = field(default_factory=Style)
     ticks: Ticks = field(default_factory=Ticks)
     labels: Labels = field(default_factory=Labels)
+    #: What NEW FRAME goes back to.  PERMANENT updates these as well as the
+    #: current settings, which is how "this plot" and "every plot" stay apart:
+    #: a style sets the baseline, and a later per-frame tweak does not stick.
+    ticks_base: Ticks = field(default_factory=Ticks)
+    labels_base: Labels = field(default_factory=Labels)
     legend: Legend = field(default_factory=Legend)
     order: tuple[str, ...] = DEFAULT_ORDER
     #: Page layout.  ``zone`` is (columns, rows) or None; ``window`` is an
@@ -179,6 +182,8 @@ class State:
             style=replace(self.style),
             ticks=self.ticks.copy(),
             labels=self.labels.copy(),
+            ticks_base=self.ticks_base.copy(),
+            labels_base=self.labels_base.copy(),
             legend=self.legend.copy(),
             order=tuple(self.order),
             page=self.page.copy(),
@@ -200,9 +205,7 @@ class State:
         carried.x = Axis(log=self.x.log)
         carried.y = Axis(log=self.y.log)
         carried.titles = {}
-        if not self.ticks.permanent:
-            carried.ticks = Ticks()
-        if not self.labels.permanent:
-            carried.labels = Labels()
+        carried.ticks = self.ticks_base.copy()
+        carried.labels = self.labels_base.copy()
         carried.palette_index = -1  # each frame starts at the top of the palette
         return carried

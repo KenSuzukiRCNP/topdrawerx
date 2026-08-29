@@ -44,7 +44,8 @@ not spending your afternoon undoing someone's idea of a pretty chart.
 
 **Physics figures are one command each.** Systematic error boxes are `BOX` over
 data with `DX`/`DY` columns. Upper limits are `ARROW DOWN`. A ratio panel under a
-spectrum, sharing the axis, is two `SET WINDOW`s.
+spectrum, sharing the axis, is two `SET WINDOW`s. A weighted gaussian fit, drawn
+and reported with its χ²/ndf, is `FIT GAUSSIAN`.
 
 **It is small.** One dependency (matplotlib), about thirty commands, a plain-text
 file format your colleague can read without installing anything.
@@ -52,11 +53,13 @@ file format your colleague can read without installing anything.
 ## Install
 
 ```sh
-pip install topdrawerx          # or: pip install "topdrawerx[repl]"
+pip install topdrawerx                    # or, with the extras:
+pip install "topdrawerx[repl,fit]"
 ```
 
-Python ≥ 3.10, matplotlib ≥ 3.7. The optional `[repl]` extra adds line editing
-and completion via `prompt_toolkit`.
+Python ≥ 3.10, matplotlib ≥ 3.7, numpy. `[repl]` adds line editing and
+completion via `prompt_toolkit`; `[fit]` adds scipy, which improves the
+non-linear fits — without it they fall back to a log-linearised fit and say so.
 
 ## A minute with it
 
@@ -106,6 +109,7 @@ Every one of these is a file in [`examples/`](examples), rendered by
 | [`annotate.tdx`](examples/annotate.tdx)<br>systematic boxes, upper limits, placed text | <img src="docs/images/annotate.png" width="330"> |
 | [`styles.tdx`](examples/styles.tdx)<br>`SET STYLE TALK`, a palette, a legend | <img src="docs/images/styles.png" width="330"> |
 | [`panels.tdx`](examples/panels.tdx)<br>`ZONE 2 2` | <img src="docs/images/panels-2.png" width="330"> |
+| [`fitting.tdx`](examples/fitting.tdx)<br>`FIT GAUSSIAN` above, `SPLINE` below | <img src="docs/images/fitting-1.png" width="330"> |
 | [`legacy_case.top`](examples/legacy_case.top)<br>a 1980s file, unchanged | <img src="docs/images/legacy_case.png" width="330"> |
 
 `styles.tdx` with `PAPER` instead of `TALK` is the same figure in monochrome
@@ -149,9 +153,9 @@ constraint and the 2026 user disagree, the user wins.
 
 ## Status and scope
 
-Version 0.x: working, tested (159 tests), and used for real figures, but the
-grammar may still move. Planned next: `FIT` and `SPLINE`, `CONTOUR` with simple
-3-D data, then a numpy API and a Jupyter cell magic. Deliberately not planned:
+Version 0.x: working, tested (187 tests), and used for real figures, but the
+grammar may still move. Planned next: `CONTOUR` with simple 3-D data, then a
+numpy API and a Jupyter cell magic. Deliberately not planned:
 control flow (`IF`, `REPEAT`) — Python is the better scripting language and the
 Python API is the seam — HBOOK, and most of the data arithmetic.
 

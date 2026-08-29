@@ -1,0 +1,86 @@
+! fitting.tdx -- milestone 6: FIT and SPLINE.
+!     tdx examples/fitting.tdx -o fitting.pdf
+!
+! FIT draws the best curve *near* the points and reports its parameters.
+! SPLINE draws a smooth curve *through* them; it is a drawing aid, not a model.
+
+SET STYLE PAPER
+SET PAGE 6.4 6.4
+
+! ---- a peak, fitted ------------------------------------------------------
+SET WINDOW X 1.0 TO 6.1 Y 3.9 TO 6.1
+TITLE TOP 'a gaussian fit'
+TITLE LEFT 'counts'
+SET LIMITS X FROM 1.4 TO 2.6 Y FROM 0 TO 130
+SET LABELS ALL OFF LEFT ON        ! the lower frame carries the numbers
+
+SET ORDER X Y DY
+1.50   12   4
+1.60   19   4
+1.70   38   6
+1.80   77   9
+1.90  108  10
+2.00   71   8
+2.10   33   6
+2.20   17   4
+2.30   10   3
+2.40    8   3
+2.50    7   3
+PLOT
+LEGEND 'data'
+FIT GAUSSIAN
+LEGEND 'gaussian'
+
+! ---- the same points, splined -------------------------------------------
+NEW FRAME
+SET WINDOW X 1.0 TO 6.1 Y 0.9 TO 3.1
+TITLE TOP 'the same points, splined'
+TITLE BOTTOM 'M  (GeV/c$^2$)'
+TITLE LEFT 'counts'
+SET LIMITS X FROM 1.4 TO 2.6 Y FROM 0 TO 130
+
+SET ORDER X Y DY
+1.50   12   4
+1.60   19   4
+1.70   38   6
+1.80   77   9
+1.90  108  10
+2.00   71   8
+2.10   33   6
+2.20   17   4
+2.30   10   3
+2.40    8   3
+2.50    7   3
+PLOT
+SPLINE
+
+! ---- page 2: a straight line and a decay ---------------------------------
+NEW PAGE
+SET WINDOW OFF
+ZONE 1 2
+
+TITLE TOP 'linear response'
+TITLE LEFT 'signal  (mV)'
+SET ORDER X Y DY
+ 1.0   2.1  0.15
+ 2.0   4.0  0.15
+ 3.0   5.9  0.15
+ 4.0   8.2  0.15
+ 5.0   9.9  0.15
+PLOT
+FIT LINE
+
+NEW FRAME
+TITLE TOP 'lifetime'
+TITLE BOTTOM 't  (ns)'
+TITLE LEFT 'counts'
+SET SCALE Y LOG
+SET ORDER X Y DY
+ 0.5  980  31
+ 1.5  612  25
+ 2.5  380  20
+ 3.5  238  15
+ 4.5  147  12
+ 5.5   92  10
+PLOT
+FIT EXPONENTIAL

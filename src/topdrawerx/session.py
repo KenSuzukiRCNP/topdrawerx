@@ -47,6 +47,9 @@ class Context:
     #: it, and only on it — as in the original, where a CASE line had to sit
     #: directly under its string.
     last_title: tuple[object, str, str] | None = None
+    #: Fit results produced during this replay, newest last.  Kept so the
+    #: Python API can reach the numbers, not only the printed summary.
+    fits: list = field(default_factory=list)
 
     @property
     def frame(self) -> Frame:
@@ -96,6 +99,8 @@ class Replay:
     state: State
     buffer: DataBuffer
     warnings: list[str]
+    messages: list[str] = field(default_factory=list)
+    fits: list = field(default_factory=list)
 
 
 class Session:
@@ -124,13 +129,14 @@ class Session:
                 cmd.handler(ctx, line.tokens[1:])
                 return ctx.messages
         self.log.append(text.rstrip("\n"))
+        before = len(self.messages)
         try:
             self._refresh()
         except TdxError:
             self.log.pop()
             self._refresh()
             raise
-        return []
+        return self.messages[before:]
 
     def run(self, script: str, lenient: bool = False) -> list[str]:
         """Run a whole script.
@@ -195,6 +201,7 @@ class Session:
         """
         if not batch:
             return []
+        before = len(self.messages)
         start = len(self.log)
         sources = [lineno for lineno, _ in batch]
         self.log.extend(raw for _, raw in batch)
@@ -202,7 +209,7 @@ class Session:
         while True:
             try:
                 self._refresh()
-                return []
+                return self.messages[before:]
             except TdxError as exc:
                 index = (exc.lineno or 0) - 1
                 if index < start or index >= len(self.log):
@@ -246,6 +253,16 @@ class Session:
     def warnings(self) -> list[str]:
         return self._replay.warnings
 
+    @property
+    def messages(self) -> list[str]:
+        """What the commands had to say — fit results, mostly."""
+        return self._replay.messages
+
+    @property
+    def fits(self) -> list:
+        """Every :class:`~topdrawerx.fitting.FitResult` this session produced."""
+        return self._replay.fits
+
     def script(self) -> str:
         return "\n".join(self.log) + ("\n" if self.log else "")
 
@@ -282,7 +299,14 @@ def replay(lines: list[str], session: "Session | None" = None) -> Replay:
     # Placement is the last step: it needs every frame's final zone/window, and
     # doing it here means a frame always knows where it sits on the page.
     layout(ctx.frames)
-    return Replay(frames=ctx.frames, state=ctx.state, buffer=ctx.buffer, warnings=ctx.warnings)
+    return Replay(
+        frames=ctx.frames,
+        state=ctx.state,
+        buffer=ctx.buffer,
+        warnings=ctx.warnings,
+        messages=ctx.messages,
+        fits=ctx.fits,
+    )
 
 
 def render_script(script: str) -> list[Frame]:

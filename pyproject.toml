@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "topdrawerx"
-version = "0.5.1"
+version = "0.6.0"
 description = "A TopDrawer-flavoured plotting language for making publication figures"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -27,6 +27,7 @@ classifiers = [
 ]
 dependencies = [
     "matplotlib>=3.7",
+    "numpy>=1.23",
 ]
 
 [project.urls]
@@ -37,7 +38,10 @@ Changelog = "https://github.com/KenSuzukiRCNP/topdrawerx/blob/trunk/CHANGELOG.md
 
 [project.optional-dependencies]
 repl = ["prompt_toolkit>=3.0"]
-dev = ["pytest>=7", "prompt_toolkit>=3.0"]
+# Non-linear fits (FIT GAUSSIAN / EXPONENTIAL) are better with scipy;
+# without it they fall back to a log-linearised fit and say so.
+fit = ["scipy>=1.10"]
+dev = ["pytest>=7", "prompt_toolkit>=3.0", "scipy>=1.10"]
 
 [project.scripts]
 tdx = "topdrawerx.cli:main"

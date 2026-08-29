@@ -88,3 +88,20 @@ def test_ticks_and_labels_are_independent():
     session = run("SET TICKS ALL ON\nSET LABELS ALL OFF BOTTOM ON\n")
     assert all(session.state.ticks.on.values())
     assert session.state.labels.on["TOP"] is False
+
+
+def test_a_per_frame_tweak_does_not_outlive_the_frame_a_style_set_up():
+    """The bug this guards: a style sets PERMANENT, then a one-frame override
+    used to inherit that permanence and silently apply to every later frame."""
+    session = run(
+        "SET STYLE PAPER\n"           # sets labels bottom+left PERMANENT
+        "SET LABELS ALL OFF LEFT ON\n"  # this frame only: no bottom numbers
+        "NEW FRAME\n"
+    )
+    assert session.state.labels.on["BOTTOM"] is True
+    assert session.state.labels.size == pytest.approx(9)  # the style's size stays
+
+
+def test_permanent_replaces_the_baseline():
+    session = run("SET TICKS SIZE 0.4 PERMANENT\nSET TICKS SIZE 0.9\nNEW FRAME\n")
+    assert session.state.ticks.size == pytest.approx(0.4)

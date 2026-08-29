@@ -3,6 +3,27 @@
 Versions follow the milestones the project was built in. Until 1.0 the command
 grammar may still change; anything that does change is listed here.
 
+## 0.6.0 — fits and splines
+
+- `FIT LINE | POLY <n> | GAUSSIAN | EXPONENTIAL [FROM <x> TO <x>] [POINTS <n>]
+  [NODRAW]` fits the data in the buffer, draws the curve and prints the
+  parameters with their errors and χ²/ndf. A `DY` column makes the fit
+  weighted. `FROM`/`TO` restrict both the fit and the drawn curve.
+- `SPLINE [POINTS <n>]` draws a natural cubic spline *through* the points —
+  a drawing aid, not a model.
+- Results are also on the session as `session.fits` for the Python API, and
+  anything a command prints now reaches the REPL and the CLI.
+- numpy is now an explicit dependency (it always arrived with matplotlib).
+  scipy is optional, in the `fit` extra: without it, gaussian and exponential
+  fits fall back to a log-linearised fit, which is a real fit but weights the
+  points differently — it says so, every time.
+- **Fixed**: a `SET TICKS`/`SET LABELS` change made after a style had set its
+  settings `PERMANENT` was itself treated as permanent, so a one-frame tweak
+  silently applied to every later frame. The permanent baseline and the
+  current frame's settings are now kept apart.
+- **Fixed**: `docs/reference.md` no longer carries the version, so a version
+  bump cannot make it stale.
+
 ## 0.5.1 — added DOI, ORCID
 
 - DOI added in the CITATION.cff
