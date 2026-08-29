@@ -3,6 +3,10 @@
 Versions follow the milestones the project was built in. Until 1.0 the command
 grammar may still change; anything that does change is listed here.
 
+## 0.6.1 — Only re-rendering example plots
+
+- Only re-rendering example plots by `python tools/render_examples.py`
+
 ## 0.6.0 — fits and splines
 
 - `FIT LINE | POLY <n> | GAUSSIAN | EXPONENTIAL [FROM <x> TO <x>] [POINTS <n>]
