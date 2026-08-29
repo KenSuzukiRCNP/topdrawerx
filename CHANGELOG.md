@@ -3,6 +3,11 @@
 Versions follow the milestones the project was built in. Until 1.0 the command
 grammar may still change; anything that does change is listed here.
 
+## 0.5.1 — added DOI, ORCID
+
+- DOI added in the CITATION.cff
+- ORCID added in the CITATION.cff
+  
 ## 0.5.0 — panels, and a rename
 
 - **Renamed**: the package is now `topdrawerx` (`pip install topdrawerx`,

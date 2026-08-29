@@ -8,9 +8,9 @@ type: software
 authors:
   - given-names: Ken
     family-names: Suzuki
-    # orcid: "https://orcid.org/0000-0000-0000-0000"
-    # affiliation: "..."
-version: 0.5.0
+    orcid: "https://orcid.org/0000-0002-1546-1657"
+    affiliation: "Research Center for Nuclear Physics, The University of Osaka"
+version: 0.5.1
 date-released: "2026-08-29"
 license: MIT
 keywords:
@@ -19,4 +19,4 @@ keywords:
   - particle physics
   - TopDrawer
 repository-code: "https://github.com/KenSuzukiRCNP/topdrawerx"
-# doi: "10.5281/zenodo.XXXXXXX"   # filled in by Zenodo on the first release
+doi: "10.5281/zenodo.22160026"
