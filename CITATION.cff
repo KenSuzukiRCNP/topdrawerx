@@ -1,0 +1,22 @@
+cff-version: 1.2.0
+message: "If you use topdrawerx in published work, please cite it."
+title: "topdrawerx: a TopDrawer-flavoured plotting language for modern Python"
+abstract: >-
+  A small command language and REPL for making publication-quality figures,
+  with the grammar of SLAC's TopDrawer and matplotlib underneath.
+type: software
+authors:
+  - given-names: Ken
+    family-names: Suzuki
+    # orcid: "https://orcid.org/0000-0000-0000-0000"
+    # affiliation: "..."
+version: 0.5.0
+date-released: "2026-08-29"
+license: MIT
+keywords:
+  - plotting
+  - visualization
+  - particle physics
+  - TopDrawer
+# repository-code: "https://github.com/<account>/topdrawerx"
+# doi: "10.5281/zenodo.XXXXXXX"   # filled in by Zenodo on the first release
