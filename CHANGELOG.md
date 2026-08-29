@@ -3,11 +3,13 @@
 Versions follow the milestones the project was built in. Until 1.0 the command
 grammar may still change; anything that does change is listed here.
 
-## 0.6.1 — Only re-rendering example plots
+## 0.6.2 — fits and splines
 
-- Only re-rendering example plots by `python tools/render_examples.py`
-
-## 0.6.0 — fits and splines
+0.6.0 and 0.6.1 were tagged but never published: the version strings in
+`pyproject.toml`, `src/topdrawerx/__init__.py` and `CITATION.cff` had drifted
+apart, and the release workflow refused to publish a tag that disagreed with
+the package. A test now checks that the three agree. 0.6.2 is 0.6.0's content,
+plus re-rendered example images.
 
 - `FIT LINE | POLY <n> | GAUSSIAN | EXPONENTIAL [FROM <x> TO <x>] [POINTS <n>]
   [NODRAW]` fits the data in the buffer, draws the curve and prints the

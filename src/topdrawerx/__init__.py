@@ -33,7 +33,7 @@ from .errors import (
 from .session import Context, Session, render_script, replay
 from . import commands  # noqa: F401  (importing this fills the registries)
 
-__version__ = "0.6.1"
+__version__ = "0.6.2"
 
 __all__ = [
     "Session",

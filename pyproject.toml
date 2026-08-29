@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "topdrawerx"
-version = "0.6.0"
+version = "0.6.2"
 description = "A TopDrawer-flavoured plotting language for making publication figures"
 readme = "README.md"
 requires-python = ">=3.10"

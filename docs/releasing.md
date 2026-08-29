@@ -29,8 +29,11 @@ matching the repository:
 1. **Make the change** and get `main` green — `python -m pytest` locally, and
    the `tests` workflow on GitHub across Python 3.10–3.14, Linux and macOS.
 
-2. **Bump the version in three files.** They must agree; the release workflow
-   refuses to publish if the tag disagrees with `pyproject.toml`.
+2. **Bump the version in three files.** They must agree — `tests/test_version.py`
+   fails if they do not, and the release workflow refuses to publish a tag that
+   disagrees with `pyproject.toml`. Run the tests *before* tagging: a mismatch
+   caught locally costs nothing, a mismatch caught in the workflow has already
+   burned a tag and a GitHub Release.
 
    ```
    pyproject.toml                version = "0.6.0"
