@@ -1,0 +1,59 @@
+! demo.tdx -- what milestone 1 can already do.
+! Run it with:   tdx examples/demo.tdx -o demo.pdf
+! or open it and keep typing:   tdx examples/demo.tdx
+
+TITLE TOP 'K$^-$p → D$^-$Ξ$_c^+$  (illustrative)'
+TITLE BOTTOM 'p$_{K^-}$  (GeV/c)'
+TITLE LEFT 'σ  (μb)'
+
+SET LIMITS X FROM 0 TO 20 Y FROM 0 TO 12
+
+! measured points, with errors
+SET ORDER X Y DY
+SET SYMBOL CIRCLE
+SET SIZE 6
+ 2.0   1.1   0.4
+ 4.0   3.6   0.5
+ 6.0   6.2   0.6
+ 8.0   8.4   0.7
+10.0   9.7   0.8
+12.0  10.3   0.9
+14.0  10.1   1.0
+16.0   9.4   1.1
+PLOT
+
+! a model curve through them
+SET ORDER X Y
+SET COLOR crimson
+SET PATTERN DASHES
+ 1.0   0.2
+ 3.0   2.3
+ 5.0   5.0
+ 7.0   7.6
+ 9.0   9.3
+11.0  10.2
+13.0  10.3
+15.0   9.8
+17.0   9.0
+19.0   8.1
+JOIN
+
+NEW FRAME
+
+TITLE TOP 'the same numbers as a histogram'
+TITLE BOTTOM 'bin centre'
+TITLE LEFT 'counts'
+SET COLOR black
+SET PATTERN SOLID
+SET LIMITS X AUTO Y FROM 0 TO 14
+
+SET ORDER X Y DY
+ 2.0   1.1   0.4
+ 4.0   3.6   0.5
+ 6.0   6.2   0.6
+ 8.0   8.4   0.7
+10.0   9.7   0.8
+12.0  10.3   0.9
+14.0  10.1   1.0
+16.0   9.4   1.1
+HISTOGRAM

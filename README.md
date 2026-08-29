@@ -1,0 +1,147 @@
+# tdx
+
+A plotting program with TopDrawer's grammar and a modern engine underneath.
+
+TopDrawer (SLAC, late 1970s) was a pleasure to use: you typed a verb, some
+numbers and another verb, and you had a figure. tdx keeps that, drops the parts
+that only existed because of card readers and pen plotters, and renders through
+matplotlib.
+
+```
+SET ORDER X Y DY
+ 2.0   1.1   0.4
+ 4.0   3.6   0.5
+ 6.0   6.2   0.6
+PLOT
+JOIN DASHES
+TITLE LEFT 'σ  (μb)'
+TITLE BOTTOM '$p_{K^-}$  (GeV/c)'
+```
+
+## Install
+
+```sh
+pip install -e ".[repl]"     # -e for now; [repl] adds line editing and a live window
+```
+
+Python ≥ 3.10, matplotlib ≥ 3.7. `prompt_toolkit` is optional.
+
+## Use
+
+```sh
+tdx                          # interactive session
+tdx figure.tdx               # run the file, then stay interactive
+tdx figure.tdx -o fig.pdf    # batch: run it and write the figure
+tdx --check old/*.top        # what would these legacy files need?
+```
+
+The output format comes from the file name — `.pdf`, `.png`, `.svg`. There is
+no `SET DEVICE` to get wrong. Several frames going to a PDF become one
+multi-page file; to PNG they become `fig-1.png`, `fig-2.png`.
+
+From Python:
+
+```python
+import tdx
+
+s = tdx.Session()
+s.run(open("figure.tdx").read())
+fig = tdx.figure(s.frame)        # a real matplotlib Figure, yours to adjust
+tdx.save(s.frames, "out.pdf")
+```
+
+## The design rule
+
+> Anything in TopDrawer that exists to serve the **user** is reproduced.
+> Anything that exists to serve a 1978 card reader, a pen plotter or a 6-bit
+> character set is accepted for compatibility but is never the recommended way.
+
+Kept, because it is the reason to do this at all:
+
+- verb-then-qualifier word order, no punctuation, no parentheses;
+- unique-prefix abbreviation — `HIST`, `JOI`, `SET LIM`;
+- stateful `SET`, then data, then a drawing verb; `NEW FRAME` as the page break;
+- a plot file that is plain text and readable by a colleague.
+
+Accepted but superseded:
+
+| legacy | modern |
+| --- | --- |
+| `CASE` lines | write Unicode (`σ`, `Ξ`) or `$maths$` directly |
+| `SET DEVICE POSTSCRIPT` | the output file name |
+| `SET INTENSITY` (pen overstriking) | `SET WIDTH` |
+| `SET FONT DUPLEX` | real fonts (milestone 2) |
+| inline data only | `READ 'run042.csv'`, or numpy arrays via the Python API |
+| uppercase, fixed columns, 80 characters | case-insensitive, free-format, UTF-8 |
+
+## Two things that are deliberately not like the original
+
+**The whole log is replayed after every command.** A frame keeps the commands
+that built it; each new command rebuilds the display list from scratch. So
+`SET LIMITS` typed *after* `PLOT` still applies, `UNDO` is one line of code, and
+an interactive session *is* a script — `SAVE work.tdx` writes it out and it runs
+unchanged in batch. TopDrawer could not do this: it drew onto a storage tube.
+
+**Unknown commands degrade, they do not abort.** Running a legacy file skips
+what tdx cannot do yet, records why, and plots the rest; the skipped line stays
+visible in the log as a comment. `--strict` turns that off. `tdx --check`
+reports which commands a pile of old files actually uses — that, not the
+manual's index, is the implementation order.
+
+## Layout
+
+```
+src/tdx/
+  lexer.py       words, numbers, quoted strings; data line vs command line
+  registry.py    command table + unique-prefix abbreviation
+  state.py       the graphics state SET writes and verbs read
+  data.py        the data buffer, SET ORDER, file reading
+  text.py        Unicode / $maths$ / (CASE, milestone 2) → styled runs
+  display.py     the display list: polylines, markers, error bars, frames
+  session.py     the command log and its replay
+  backends/      matplotlib (default) and json (test oracle)
+  commands/      one small module per command
+  compat.py      the --check coverage report
+  repl.py, cli.py
+```
+
+The interpreter never imports matplotlib. Everything crosses into graphics
+through the display list, which is why a native SVG backend can be added later
+without touching a command, and why the tests compare readable JSON instead of
+pixels.
+
+Adding a command means adding one file under `commands/` and one import line:
+
+```python
+@COMMANDS.define("ARROW", min_abbrev=3, usage="ARROW <x1> <y1> <x2> <y2>")
+def cmd_arrow(ctx, args):
+    """Draw an arrow."""
+    ...
+```
+
+## Milestone 1 — what works now
+
+`SET LIMITS / SCALE / ORDER / SYMBOL / PATTERN / COLOR / SIZE / WIDTH / FILL`,
+`PLOT`, `JOIN`, `HISTOGRAM`, `TITLE`, `READ`, `NEW FRAME`, `CLEAR`, and the meta
+commands `HELP`, `SHOW`, `LIST`, `UNDO`, `SAVE`, `EXIT`. Error bars come from
+`DX`/`DY` columns. Frames, log axes, automatic limits, PDF/PNG/SVG output.
+
+## Next
+
+- **M2** — `CASE` interpretation, real font selection, legacy symbol codes,
+  ticks and labels (`SET TICKS`, `SET LABELS`), fill patterns, text and boxes
+  and arrows on the frame.
+- **M3** — `ZONE` and `SET WINDOW` (multi-panel pages), colour palettes for
+  multi-dataset plots, `IF`/`ELSE`, `SET FILE INPUT` (include), macros.
+- **M4** — file-watch mode, a Jupyter cell magic, numpy datasets from the
+  Python API.
+
+## Tests
+
+```sh
+python -m pytest
+TDX_UPDATE_GOLDEN=1 python -m pytest tests/test_golden.py   # after an intended change
+```
+
+Golden tests compare display lists, not images; a couple of thin tests check
+that matplotlib really writes files.

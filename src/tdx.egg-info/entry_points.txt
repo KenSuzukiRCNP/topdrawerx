@@ -1,0 +1,2 @@
+[console_scripts]
+tdx = tdx.cli:main

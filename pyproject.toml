@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "tdx"
+version = "0.1.0"
+description = "A TopDrawer-flavoured plotting language for modern Python"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+dependencies = [
+    "matplotlib>=3.7",
+]
+
+[project.optional-dependencies]
+repl = ["prompt_toolkit>=3.0"]
+dev = ["pytest>=7", "prompt_toolkit>=3.0"]
+
+[project.scripts]
+tdx = "tdx.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
