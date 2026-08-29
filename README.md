@@ -1,5 +1,10 @@
 # topdrawerx
 
+[![tests](https://github.com/KenSuzukiRCNP/topdrawerx/actions/workflows/tests.yml/badge.svg)](https://github.com/KenSuzukiRCNP/topdrawerx/actions/workflows/tests.yml)
+[![PyPI](https://img.shields.io/pypi/v/topdrawerx)](https://pypi.org/project/topdrawerx/)
+[![python](https://img.shields.io/pypi/pyversions/topdrawerx)](https://pypi.org/project/topdrawerx/)
+[![licence](https://img.shields.io/badge/licence-MIT-blue)](LICENSE)
+
 **A small command language for making publication figures — and the REPL to
 go with it.** Type a few lines, get a figure. The file stays readable, the
 session *is* the script, and the defaults are the ones a physics journal wants.
@@ -46,7 +51,7 @@ file format your colleague can read without installing anything.
 ## Install
 
 ```sh
-pip install topdrawerx          # once released; for now: pip install -e ".[repl]"
+pip install topdrawerx          # or: pip install "topdrawerx[repl]"
 ```
 
 Python ≥ 3.10, matplotlib ≥ 3.7. The optional `[repl]` extra adds line editing
@@ -143,7 +148,7 @@ constraint and the 2026 user disagree, the user wins.
 
 ## Status and scope
 
-Version 0.x: working, tested (157 tests), and used for real figures, but the
+Version 0.x: working, tested (159 tests), and used for real figures, but the
 grammar may still move. Planned next: `FIT` and `SPLINE`, `CONTOUR` with simple
 3-D data, then a numpy API and a Jupyter cell magic. Deliberately not planned:
 control flow (`IF`, `REPEAT`) — Python is the better scripting language and the

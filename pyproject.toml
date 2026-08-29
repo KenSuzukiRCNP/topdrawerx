@@ -29,11 +29,11 @@ dependencies = [
     "matplotlib>=3.7",
 ]
 
-# Fill these in when the repository is public, then uncomment.
-# [project.urls]
-# Homepage = "https://github.com/<account>/topdrawerx"
-# Source = "https://github.com/<account>/topdrawerx"
-# Issues = "https://github.com/<account>/topdrawerx/issues"
+[project.urls]
+Homepage = "https://github.com/KenSuzukiRCNP/topdrawerx"
+Source = "https://github.com/KenSuzukiRCNP/topdrawerx"
+Issues = "https://github.com/KenSuzukiRCNP/topdrawerx/issues"
+Changelog = "https://github.com/KenSuzukiRCNP/topdrawerx/blob/trunk/CHANGELOG.md"
 
 [project.optional-dependencies]
 repl = ["prompt_toolkit>=3.0"]

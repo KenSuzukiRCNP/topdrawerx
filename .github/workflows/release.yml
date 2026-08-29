@@ -1,0 +1,73 @@
+name: release
+
+# Publishes to PyPI when you publish a GitHub Release, using PyPI's trusted
+# publishing (OIDC) — no API token is stored anywhere.
+#
+# Three names must match the "pending publisher" you registered on PyPI:
+#   repository       KenSuzukiRCNP/topdrawerx
+#   workflow file    release.yml   (this file's name)
+#   environment      pypi          (the job below)
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build and check the distributions
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: The tag must match the version in pyproject.toml
+        if: github.event_name == 'release'
+        run: |
+          version=$(python -c "import tomllib, pathlib; print(tomllib.loads(pathlib.Path('pyproject.toml').read_text())['project']['version'])")
+          tag="${GITHUB_REF_NAME#v}"
+          echo "pyproject.toml: $version   tag: $tag"
+          test "$version" = "$tag"
+
+      - name: Build
+        run: |
+          python -m pip install --upgrade pip build twine
+          python -m build
+
+      - name: Check the metadata and install the wheel
+        env:
+          MPLBACKEND: Agg
+        run: |
+          python -m twine check dist/*
+          python -m pip install dist/*.whl
+          tdx --version
+          printf "SET ORDER X Y\n1 2\n2 4\nPLOT\nSAVE 'smoke.png'\nSTOP\n" | tdx --no-window
+          test -s smoke.png
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+  publish:
+    name: Publish to PyPI
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/topdrawerx
+    permissions:
+      id-token: write        # this is what PyPI trusts; no token needed
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+      - uses: pypa/gh-action-pypi-publish@release/v1
