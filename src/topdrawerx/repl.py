@@ -41,7 +41,8 @@ class LiveFigure:
 
             apply_style()
             plt.ion()
-            self.fig, self.ax = plt.subplots(figsize=FIGSIZE)
+            self.fig = plt.figure(figsize=FIGSIZE)
+            self.ax = None
             self.fig.canvas.manager.set_window_title("tdx")
             self.fig.show()
         except Exception as exc:  # no display, no GUI backend, ...
@@ -49,12 +50,22 @@ class LiveFigure:
             self.enabled = False
 
     def update(self, session: Session) -> None:
-        if not self.enabled or self.ax is None:
+        """Redraw the page the last frame lives on, panels and all."""
+        if not self.enabled or self.fig is None:
             return
         from .backends.matplotlib_backend import draw_frame
+        from .display import layout
 
         try:
-            draw_frame(session.frame, self.ax)
+            pages = layout(session.frames)
+            self.fig.clear()
+            if pages:
+                page = pages[-1]
+                self.fig.set_size_inches(*page.size, forward=True)
+                for frame in page.frames:
+                    x0, y0, x1, y1 = frame.rect
+                    ax = self.fig.add_axes((x0, y0, max(x1 - x0, 1e-3), max(y1 - y0, 1e-3)))
+                    draw_frame(frame, ax)
             self.fig.canvas.draw_idle()
             self.flush()
         except Exception as exc:  # pragma: no cover - GUI trouble

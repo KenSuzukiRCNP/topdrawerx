@@ -2,8 +2,8 @@
 
 import pytest
 
-from tdx import Session
-from tdx.errors import ArgumentError
+from topdrawerx import Session
+from topdrawerx.errors import ArgumentError
 
 
 def run(script: str) -> Session:

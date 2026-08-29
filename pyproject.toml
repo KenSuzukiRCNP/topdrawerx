@@ -3,8 +3,8 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "tdx"
-version = "0.4.0"
+name = "topdrawerx"
+version = "0.5.0"
 description = "A TopDrawer-flavoured plotting language for modern Python"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -18,13 +18,13 @@ repl = ["prompt_toolkit>=3.0"]
 dev = ["pytest>=7", "prompt_toolkit>=3.0"]
 
 [project.scripts]
-tdx = "tdx.cli:main"
+tdx = "topdrawerx.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
 
 [tool.setuptools.package-data]
-tdx = ["styles/*.tdx"]
+topdrawerx = ["styles/*.tdx"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

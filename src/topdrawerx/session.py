@@ -24,7 +24,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 from .data import DataBuffer
-from .display import Frame
+from .display import Frame, layout
 from .errors import TdxError
 from .lexer import LineKind, classify, scan_line
 from .registry import COMMANDS
@@ -279,6 +279,9 @@ def replay(lines: list[str], session: "Session | None" = None) -> Replay:
         cmd = COMMANDS.resolve(tokens[0].text, lineno)
         cmd.handler(ctx, list(tokens[1:]))
     ctx.frame.apply_state(ctx.state)
+    # Placement is the last step: it needs every frame's final zone/window, and
+    # doing it here means a frame always knows where it sits on the page.
+    layout(ctx.frames)
     return Replay(frames=ctx.frames, state=ctx.state, buffer=ctx.buffer, warnings=ctx.warnings)
 
 

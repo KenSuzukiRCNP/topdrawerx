@@ -1,6 +1,7 @@
-# tdx
+# topdrawerx
 
 A plotting program with TopDrawer's grammar and a modern engine underneath.
+The package is `topdrawerx`; the command you type is `tdx`.
 
 TopDrawer (SLAC, late 1970s) was a pleasure to use: you typed a verb, some
 numbers and another verb, and you had a figure. tdx keeps that, drops the parts
@@ -24,6 +25,8 @@ TITLE BOTTOM '$p_{K^-}$  (GeV/c)'
 pip install -e ".[repl]"     # -e for now; [repl] adds line editing and a live window
 ```
 
+The import name matches the package: `import topdrawerx as tdx`.
+
 Python ≥ 3.10, matplotlib ≥ 3.7. `prompt_toolkit` is optional.
 
 ## Use
@@ -42,7 +45,7 @@ multi-page file; to PNG they become `fig-1.png`, `fig-2.png`.
 From Python:
 
 ```python
-import tdx
+import topdrawerx as tdx
 
 s = tdx.Session()
 s.run(open("figure.tdx").read())
@@ -116,7 +119,7 @@ manual's index, is the implementation order.
 ## Layout
 
 ```
-src/tdx/
+src/topdrawerx/
   lexer.py       words, numbers, quoted strings; data line vs command line
   registry.py    command table + unique-prefix abbreviation
   state.py       the graphics state SET writes and verbs read
@@ -127,6 +130,9 @@ src/tdx/
   backends/      matplotlib (default) and json (test oracle)
   commands/      one small module per command
   compat.py      the --check coverage report
+  charsets.py    the manual's character sets, with section citations
+  styles.py      styles, and the built-in style scripts in styles/
+  palettes.py    colour palettes
   repl.py, cli.py
 ```
 
@@ -219,10 +225,31 @@ test to keep it that way. Interactive replay stays comfortable to ~10⁴ points
 (20 ms a command) and drags near 10⁵ (~1 s); if that becomes normal, the fix is
 to memoise parsed datasets, not to abandon replay.
 
+**M5** — several frames on one page:
+
+```
+ZONE 2 2                              equal cells; each NEW FRAME takes the next
+SET PAGE 9 7                          the page itself, in inches
+SET WINDOW X 1 TO 6.1 Y 2.3 TO 6.1    this frame, exactly, in inches
+SET WINDOW OFF                        back to the zone
+NEW PAGE                              start a page, leaving the zone unfinished
+```
+
+`examples/panels.tdx` builds both: a spectrum with a ratio panel under it
+(`SET WINDOW` on each, so they touch and share the x axis), then a 2x2 zone.
+
+`ZONE` gives equal cells. For unequal ones — a tall plot over a short ratio
+panel — use `SET WINDOW`; adjacent windows leave no gap, which is the point.
+Dividing a page does not enlarge it, exactly as on a plotter: four panels on a
+6.4 x 5 inch page are quarter-size, and `SET PAGE` is how you get room. Text
+does not shrink with the cell, so small panels want a bigger page.
+
+Also in M5: `!` and `;` now start a comment anywhere on a line, not only at the
+start, so a command can carry a note. (`#` still only comments at the start of
+a line, because colours are written `#ff8800`.)
+
 ## Next
 
-- **M5** — `ZONE` and `SET WINDOW`: several frames on one page, and with them
-  ratio panels.
 - **M6** — `FIT` (line, polynomial, gaussian, exponential) and `SPLINE`. numpy
   does the polynomial work; scipy is imported lazily for the rest, so it stays
   an optional dependency.

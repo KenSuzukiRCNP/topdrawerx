@@ -1,8 +1,8 @@
 import pytest
 
-from tdx import Session
-from tdx.display import ErrorBars, Markers, Polyline
-from tdx.errors import ArgumentError, DataError, UnknownCommand
+from topdrawerx import Session
+from topdrawerx.display import ErrorBars, Markers, Polyline
+from topdrawerx.errors import ArgumentError, DataError, UnknownCommand
 
 SIMPLE = """
 SET ORDER X Y
@@ -119,7 +119,7 @@ def test_script_round_trips():
     assert again.frame.to_dict() == session.frame.to_dict()
 
 
-LEGACY = "SET ORDER X Y\n1 2\n2 4\nZONE 2 2\nSET SHADE 3\nPLOT\n"
+LEGACY = "SET ORDER X Y\n1 2\n2 4\nBARGRAPH 3\nSET SHADE 3\nPLOT\n"
 
 
 def test_lenient_run_skips_what_it_cannot_do():
@@ -127,7 +127,7 @@ def test_lenient_run_skips_what_it_cannot_do():
     session = Session()
     session.run(LEGACY, lenient=True)
     assert len(session.skipped) == 2
-    assert "unknown command 'ZONE'" in session.skipped[0]
+    assert "unknown command 'BARGRAPH'" in session.skipped[0]
     assert "unknown SET property 'SHADE'" in session.skipped[1]
     assert session.script().count("! tdx skipped") == 2
     assert len(session.frame.items) == 1
@@ -184,6 +184,6 @@ def test_meta_commands_inside_a_script_see_the_lines_before_them():
 
 def test_a_bad_line_in_the_middle_of_a_batch_is_reported_by_source_line():
     session = Session()
-    session.run("SET ORDER X Y\n1 2\nZONE 2 2\n2 3\nPLOT\n", lenient=True)
+    session.run("SET ORDER X Y\n1 2\nBARGRAPH 3\n2 3\nPLOT\n", lenient=True)
     assert session.skipped and session.skipped[0].startswith("line 3:")
     assert len(session.frame.items[0].x) == 2

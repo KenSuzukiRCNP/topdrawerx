@@ -12,13 +12,24 @@ from ..registry import COMMANDS
 from ..session import Context
 
 
-@COMMANDS.define("NEW", min_abbrev=3, usage="NEW FRAME")
+@COMMANDS.define("NEW", min_abbrev=3, usage="NEW FRAME | NEW PAGE")
 def cmd_new(ctx: Context, args: list[Token]) -> None:
-    """Start a new frame."""
+    """Start a new frame, or a new page.
+
+    ``NEW PAGE`` starts a frame *and* breaks the page, leaving the rest of the
+    zone empty — the way to end a page early.
+    """
+    page_break = False
     for tok in args:
-        if tok.is_word and not tok.upper.startswith("FRAM"):
-            ctx.warn(f"NEW {tok.text.upper()}: only NEW FRAME is understood")
+        if not tok.is_word:
+            continue
+        word = tok.upper
+        if word.startswith("PAG"):
+            page_break = True
+        elif not word.startswith("FRAM"):
+            ctx.warn(f"NEW {word}: only NEW FRAME and NEW PAGE are understood")
     ctx.new_frame()
+    ctx.frame.page_break = page_break
 
 
 @COMMANDS.define("CLEAR", min_abbrev=3, usage="CLEAR")

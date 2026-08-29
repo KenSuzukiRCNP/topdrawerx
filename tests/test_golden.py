@@ -11,8 +11,8 @@ import json
 import os
 import pathlib
 
-from tdx import Session
-from tdx.backends import json_backend
+from topdrawerx import Session
+from topdrawerx.backends import json_backend
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 GOLDEN = pathlib.Path(__file__).parent / "golden" / "demo.json"

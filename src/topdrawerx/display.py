@@ -18,7 +18,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from .state import Labels, Legend, State, TITLE_SLOTS, Ticks
+from .state import Labels, Legend, Page, State, TITLE_SLOTS, Ticks
 
 
 @dataclass
@@ -250,6 +250,14 @@ class Frame:
     ticks: Ticks = field(default_factory=Ticks)
     labels: Labels = field(default_factory=Labels)
     legend: Legend = field(default_factory=Legend)
+    #: Where this frame goes on the page.  ``zone`` and ``window`` are what the
+    #: user asked for; ``rect`` is what :func:`layout` worked out, in fractions
+    #: of the page, and is what a backend actually uses.
+    page: Page = field(default_factory=Page)
+    zone: tuple[int, int] | None = None
+    window: tuple[float, float, float, float] | None = None
+    page_break: bool = False
+    rect: tuple[float, float, float, float] = (0.0, 0.0, 1.0, 1.0)
 
     def add(self, item: Item) -> None:
         self.items.append(item)
@@ -274,6 +282,9 @@ class Frame:
         self.ticks = state.ticks.copy()
         self.labels = state.labels.copy()
         self.legend = state.legend.copy()
+        self.page = state.page.copy()
+        self.zone = state.zone
+        self.window = state.window
 
     # -- limits ---------------------------------------------------------
     def data_bounds(self) -> tuple[float, float, float, float] | None:
@@ -309,6 +320,10 @@ class Frame:
             "ticks": self.ticks.to_dict(),
             "labels": self.labels.to_dict(),
             "legend": self.legend.to_dict(),
+            "page": self.page.to_dict(),
+            "zone": list(self.zone) if self.zone else None,
+            "window": list(self.window) if self.window else None,
+            "rect": [round(v, 6) for v in self.rect],
             "items": [item.to_dict() for item in self.items],
         }
 
@@ -328,3 +343,99 @@ def _pad(lo: float, hi: float, log: bool, frac: float = 0.05) -> tuple[float, fl
         return lo - pad, hi + pad
     pad = (hi - lo) * frac
     return lo - pad, hi + pad
+
+
+# -- page layout --------------------------------------------------------
+#: Margins of a frame inside its cell, as fractions of the cell.  Chosen so a
+#: full-page frame leaves room for labels and titles on the left and bottom.
+MARGINS = (0.15, 0.14, 0.05, 0.07)  # left, bottom, right, top
+
+
+@dataclass
+class PageLayout:
+    """One physical page and the frames placed on it."""
+
+    size: tuple[float, float]
+    frames: list[Frame] = field(default_factory=list)
+
+    def to_dict(self) -> dict:
+        return {"size": list(self.size), "frames": [f.to_dict() for f in self.frames]}
+
+
+def _inset(cell: tuple[float, float, float, float]) -> tuple[float, float, float, float]:
+    """Pull a cell in by the standard margins, in fractions of that cell."""
+    x0, y0, x1, y1 = cell
+    w, h = x1 - x0, y1 - y0
+    left, bottom, right, top = MARGINS
+    return (x0 + left * w, y0 + bottom * h, x1 - right * w, y1 - top * h)
+
+
+def _cell(zone: tuple[int, int], index: int) -> tuple[float, float, float, float]:
+    """The *index*-th cell of a zone grid, filling left to right, top to bottom."""
+    cols, rows = zone
+    col, row = index % cols, index // cols
+    return (col / cols, 1.0 - (row + 1) / rows, (col + 1) / cols, 1.0 - row / rows)
+
+
+def layout(frames: list[Frame]) -> list[PageLayout]:
+    """Place frames onto pages, filling in each frame's ``rect``.
+
+    Three ways a frame gets its place, in order of precedence:
+
+    * ``SET WINDOW`` — an exact rectangle in inches, used as given;
+    * ``ZONE`` — the next free cell of the grid, a new page when it fills;
+    * neither — one frame per page, inset by the standard margins.
+
+    The zone in force is the one recorded on each frame, so a ``ZONE`` typed
+    later in the session lays out every frame that closed after it.
+    """
+    pages: list[PageLayout] = []
+    current: PageLayout | None = None
+    cursor = 0
+    zone_in_use: tuple[int, int] | None = None
+
+    def start_page(frame: Frame) -> PageLayout:
+        page = PageLayout(size=(frame.page.width, frame.page.height))
+        pages.append(page)
+        return page
+
+    for frame in frames:
+        if frame.empty and len(frames) > 1:
+            continue  # a trailing empty frame is not a blank page
+        size = (frame.page.width, frame.page.height)
+        needs_page = (
+            current is None
+            or frame.page_break
+            or size != current.size
+            or (frame.zone != zone_in_use and frame.window is None)
+        )
+        if frame.window is not None:
+            if current is None or frame.page_break or size != current.size:
+                current = start_page(frame)
+            x0, y0, x1, y1 = frame.window
+            width, height = frame.page.width, frame.page.height
+            frame.rect = (
+                min(x0, x1) / width,
+                min(y0, y1) / height,
+                max(x0, x1) / width,
+                max(y0, y1) / height,
+            )
+            current.frames.append(frame)
+            continue
+
+        if frame.zone is None:
+            current = start_page(frame)
+            zone_in_use, cursor = None, 0
+            frame.rect = _inset((0.0, 0.0, 1.0, 1.0))
+            current.frames.append(frame)
+            continue
+
+        cols, rows = frame.zone
+        if needs_page or cursor >= cols * rows:
+            current = start_page(frame)
+            zone_in_use, cursor = frame.zone, 0
+        frame.rect = _inset(_cell(frame.zone, cursor))
+        cursor += 1
+        current.frames.append(frame)
+
+    return pages

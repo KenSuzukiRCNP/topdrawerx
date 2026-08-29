@@ -9,7 +9,18 @@ from __future__ import annotations
 
 from typing import Any
 
-from ..display import Arrow, Box, ErrorBars, Frame, Markers, Polygon, Polyline, Text
+from ..display import (
+    Arrow,
+    Box,
+    ErrorBars,
+    Frame,
+    Markers,
+    PageLayout,
+    Polygon,
+    Polyline,
+    Text,
+    layout,
+)
 from ..text import to_matplotlib
 
 #: TopDrawer-ish page: a little wider than tall, generous margins.
@@ -290,23 +301,38 @@ def draw_frame(frame: Frame, ax) -> None:
     draw_legend(frame, ax)
 
 
-def make_figure(frame: Frame, figsize: tuple[float, float] = FIGSIZE):
-    """Render one frame into a fresh figure."""
+def make_page(page: PageLayout):
+    """Render one page: a figure, with an axes per frame at its rectangle.
+
+    Positions come from the layout pass, so nothing here has to know about
+    zones or windows — and matplotlib's automatic layout stays out of the way,
+    which is what makes a physical page mean something.
+    """
     apply_style()
     import matplotlib.pyplot as plt
 
-    fig, ax = plt.subplots(figsize=figsize)
-    draw_frame(frame, ax)
-    fig.tight_layout()
+    fig = plt.figure(figsize=page.size)
+    for frame in page.frames:
+        x0, y0, x1, y1 = frame.rect
+        ax = fig.add_axes((x0, y0, max(x1 - x0, 1e-3), max(y1 - y0, 1e-3)))
+        draw_frame(frame, ax)
     return fig
 
 
-def save(frames: list[Frame], path: str, figsize: tuple[float, float] = FIGSIZE) -> list[str]:
-    """Write *frames* to *path*.
+def make_figure(frame: Frame, figsize: tuple[float, float] | None = None):
+    """Render one frame on a page of its own."""
+    page = PageLayout(size=figsize or (frame.page.width, frame.page.height), frames=[frame])
+    if frame.rect == (0.0, 0.0, 1.0, 1.0):
+        layout([frame])
+    return make_page(page)
 
-    Multiple frames go into one multi-page PDF when the target is a PDF, and
-    into ``name-1.png``, ``name-2.png`` ... otherwise.  Format comes from the
-    file name -- there is no ``SET DEVICE`` to get wrong.
+
+def save(frames: list[Frame], path: str, figsize: tuple[float, float] | None = None) -> list[str]:
+    """Write *frames* to *path*, laid out onto pages.
+
+    Several pages going to a PDF become one multi-page file; to any other
+    format they become ``name-1.png``, ``name-2.png`` ...  The format comes
+    from the file name -- there is no ``SET DEVICE`` to get wrong.
     """
     import os
 
@@ -316,23 +342,28 @@ def save(frames: list[Frame], path: str, figsize: tuple[float, float] = FIGSIZE)
     if not frames:
         raise ValueError("nothing to save: no frames")
 
+    pages = layout(frames)
+    if figsize is not None:
+        for page in pages:
+            page.size = figsize
+
     root, ext = os.path.splitext(path)
     ext = ext.lower()
     written: list[str] = []
 
-    if ext == ".pdf" and len(frames) > 1:
+    if ext == ".pdf" and len(pages) > 1:
         from matplotlib.backends.backend_pdf import PdfPages
 
         with PdfPages(path) as pdf:
-            for frame in frames:
-                fig = make_figure(frame, figsize)
+            for page in pages:
+                fig = make_page(page)
                 pdf.savefig(fig)
                 plt.close(fig)
         return [path]
 
-    for i, frame in enumerate(frames, start=1):
-        target = path if len(frames) == 1 else f"{root}-{i}{ext}"
-        fig = make_figure(frame, figsize)
+    for i, page in enumerate(pages, start=1):
+        target = path if len(pages) == 1 else f"{root}-{i}{ext}"
+        fig = make_page(page)
         fig.savefig(target, dpi=200)
         plt.close(fig)
         written.append(target)

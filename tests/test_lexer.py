@@ -1,7 +1,7 @@
 import pytest
 
-from tdx.errors import LexError
-from tdx.lexer import LineKind, parse_number, scan_line, tokenize
+from topdrawerx.errors import LexError
+from topdrawerx.lexer import LineKind, parse_number, scan_line, tokenize
 
 
 def test_data_line_is_all_numbers():
@@ -49,3 +49,18 @@ def test_fortran_exponent():
 
 def test_commas_separate():
     assert [t.value for t in tokenize("1,2,3")] == [1.0, 2.0, 3.0]
+
+
+def test_trailing_comments():
+    line = scan_line("SET LABELS LEFT ON   ! no numbers on the shared axis")
+    assert [t.text for t in line.tokens] == ["SET", "LABELS", "LEFT", "ON"]
+    assert scan_line("1 2 3 ; and a note").numbers == [1.0, 2.0, 3.0]
+
+
+def test_hash_is_not_an_inline_comment_because_colours_use_it():
+    line = scan_line("SET COLOR #ff8800")
+    assert line.tokens[-1].text == "#ff8800"
+
+
+def test_comment_characters_inside_a_string_are_kept():
+    assert tokenize("TITLE TOP 'hi! there'")[-1].text == "hi! there"

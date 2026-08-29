@@ -1,4 +1,4 @@
-from tdx.text import parse, to_matplotlib
+from topdrawerx.text import parse, to_matplotlib
 
 
 def test_plain_unicode_is_one_literal_run():

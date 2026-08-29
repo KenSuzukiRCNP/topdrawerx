@@ -106,6 +106,26 @@ class Labels:
 
 
 @dataclass
+class Page:
+    """The physical page, in inches — ``SET PAGE``.
+
+    Frames are placed on it: ``ZONE`` divides it into equal cells, ``SET
+    WINDOW`` puts a frame at an exact position.  Dividing a page does not
+    enlarge it, exactly as on a plotter, so a 2x2 zone gives four quarter-size
+    panels; make the page bigger if you want bigger panels.
+    """
+
+    width: float = 6.4
+    height: float = 5.0
+
+    def copy(self) -> "Page":
+        return Page(self.width, self.height)
+
+    def to_dict(self) -> dict:
+        return {"width": self.width, "height": self.height}
+
+
+@dataclass
 class Legend:
     """Where the key goes — ``LEGEND AT``, ``LEGEND TOP RIGHT``, ``LEGEND OFF``."""
 
@@ -136,6 +156,12 @@ class State:
     labels: Labels = field(default_factory=Labels)
     legend: Legend = field(default_factory=Legend)
     order: tuple[str, ...] = DEFAULT_ORDER
+    #: Page layout.  ``zone`` is (columns, rows) or None; ``window`` is an
+    #: explicit (x0, y0, x1, y1) in inches and wins over the zone.  Both live
+    #: on the page, so they survive NEW FRAME.
+    page: Page = field(default_factory=Page)
+    zone: tuple[int, int] | None = None
+    window: tuple[float, float, float, float] | None = None
     #: Colour cycling: the palette name, and how far through it we are.
     #: "none" means every dataset is drawn in the current SET COLOR, which is
     #: the original's behaviour and stays the default.
@@ -155,6 +181,9 @@ class State:
             labels=self.labels.copy(),
             legend=self.legend.copy(),
             order=tuple(self.order),
+            page=self.page.copy(),
+            zone=self.zone,
+            window=self.window,
             palette=self.palette,
             palette_index=self.palette_index,
             ignored=dict(self.ignored),

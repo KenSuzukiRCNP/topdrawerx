@@ -1,8 +1,8 @@
 import pytest
 
-import tdx  # noqa: F401  (fills the registries)
-from tdx.errors import AmbiguousCommand, UnknownCommand
-from tdx.registry import COMMANDS, SETTERS
+import topdrawerx  # noqa: F401  (fills the registries)
+from topdrawerx.errors import AmbiguousCommand, UnknownCommand
+from topdrawerx.registry import COMMANDS, SETTERS
 
 
 def test_abbreviation():
@@ -21,7 +21,7 @@ def test_too_short_is_unknown():
 
 
 def test_ambiguous_lists_candidates():
-    from tdx.registry import Registry
+    from topdrawerx.registry import Registry
 
     reg = Registry("test")
     reg.define("PLOT", min_abbrev=2)(lambda ctx, args: None)

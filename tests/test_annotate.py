@@ -2,9 +2,9 @@
 
 import pytest
 
-from tdx import Session
-from tdx.display import Arrow, Box, Polygon, Text
-from tdx.errors import ArgumentError
+from topdrawerx import Session
+from topdrawerx.display import Arrow, Box, Polygon, Text
+from topdrawerx.errors import ArgumentError
 
 DATA = "SET ORDER X Y DX DY\n2 10 0.5 1\n4 20 0.5 2\n"
 
@@ -124,7 +124,7 @@ def test_hatch_implies_a_filled_outline():
 
 
 def test_plain_histogram_is_still_a_polyline():
-    from tdx.display import Polyline
+    from topdrawerx.display import Polyline
 
     item = run("SET ORDER X Y\n1 5\n2 7\nHISTOGRAM\n").frame.items[0]
     assert isinstance(item, Polyline)

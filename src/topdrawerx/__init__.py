@@ -2,7 +2,7 @@
 
 Quick use::
 
-    import tdx
+    import topdrawerx
 
     session = tdx.Session()
     session.run('''
@@ -33,7 +33,7 @@ from .errors import (
 from .session import Context, Session, render_script, replay
 from . import commands  # noqa: F401  (importing this fills the registries)
 
-__version__ = "0.4.0"
+__version__ = "0.5.0"
 
 __all__ = [
     "Session",

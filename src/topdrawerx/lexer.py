@@ -28,6 +28,9 @@ from enum import Enum
 from .errors import LexError
 
 COMMENT_PREFIXES = ("!", "#", ";")
+#: Characters that start a comment part-way along a line.  '#' is not one of
+#: them: it starts colours (#ff8800) and is only a comment at the line start.
+INLINE_COMMENT = ("!", ";")
 QUOTES = ("'", '"')
 
 # Accepts 1, 1., .5, -1.5e-3 and the Fortran-style 1.5D+03 found in old files.
@@ -101,6 +104,8 @@ def tokenize(text: str, lineno: int | None = None) -> list[Token]:
         if ch.isspace() or ch == ",":
             i += 1
             continue
+        if ch in INLINE_COMMENT:
+            break  # the rest of the line is a comment
         if ch in QUOTES:
             quote = ch
             i += 1

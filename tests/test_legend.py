@@ -2,8 +2,8 @@
 
 import pytest
 
-from tdx import Session
-from tdx.errors import ArgumentError
+from topdrawerx import Session
+from topdrawerx.errors import ArgumentError
 
 DATA = "SET ORDER X Y\n1 2\n2 3\n"
 

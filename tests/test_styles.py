@@ -2,9 +2,9 @@
 
 import pytest
 
-from tdx import Session
-from tdx.errors import ArgumentError
-from tdx.styles import list_styles, state_to_commands
+from topdrawerx import Session
+from topdrawerx.errors import ArgumentError
+from topdrawerx.styles import list_styles, state_to_commands
 
 
 def run(script: str) -> Session:

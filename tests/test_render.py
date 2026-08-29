@@ -12,7 +12,7 @@ import pathlib  # noqa: E402
 
 import pytest  # noqa: E402
 
-from tdx import Session, save  # noqa: E402
+from topdrawerx import Session, save  # noqa: E402
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 

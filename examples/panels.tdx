@@ -1,0 +1,104 @@
+! panels.tdx -- milestone 5: several frames on one page.
+!     tdx examples/panels.tdx -o panels.pdf
+!
+! Page 1: a spectrum with a ratio panel under it, made with SET WINDOW so the
+!         two frames touch and share the x axis.
+! Page 2: a 2x2 zone, four equal panels.
+
+SET STYLE PAPER
+SET PAGE 6.4 6.4
+
+! ---- upper frame: the spectrum ------------------------------------------
+SET WINDOW X 1.0 TO 6.1 Y 2.3 TO 6.1
+TITLE TOP 'missing mass'
+TITLE LEFT 'counts / 5 MeV'
+SET LIMITS X FROM 1.4 TO 2.6 Y FROM 0 TO 120
+SET LABELS ALL OFF LEFT ON        ! no numbers on the shared axis
+
+SET ORDER X Y DY
+1.50   12   4
+1.60   18   4
+1.70   35   6
+1.80   78   9
+1.90  104  10
+2.00   66   8
+2.10   30   5
+2.20   16   4
+2.30   11   3
+2.40    9   3
+2.50    8   3
+PLOT
+LEGEND 'data'
+
+SET ORDER X Y
+1.45   10
+1.60   20
+1.75   45
+1.90   99
+2.05   58
+2.20   20
+2.35   11
+2.50    8
+JOIN DASHES
+LEGEND 'fit'
+LEGEND TOP RIGHT
+
+! ---- lower frame: the ratio ---------------------------------------------
+NEW FRAME
+SET WINDOW X 1.0 TO 6.1 Y 1.0 TO 2.3
+TITLE BOTTOM 'M  (GeV/c$^2$)'
+TITLE LEFT 'data / fit'
+SET LIMITS X FROM 1.4 TO 2.6 Y FROM 0.45 TO 1.55   ! stop short of 1.6 so the
+SET LABELS ALL OFF BOTTOM ON LEFT ON        ! label does not touch the frame above
+
+SET ORDER X Y DY
+1.50  1.20  0.40
+1.60  0.90  0.20
+1.70  0.78  0.13
+1.80  0.95  0.11
+1.90  1.05  0.10
+2.00  1.14  0.14
+2.10  0.94  0.16
+2.20  0.80  0.20
+2.30  1.00  0.27
+2.40  1.13  0.38
+2.50  1.00  0.37
+PLOT
+ARROW 1.4 1.0 2.6 1.0 NOHEAD
+
+! ---- page 2: four panels ------------------------------------------------
+NEW PAGE
+SET WINDOW OFF
+ZONE 2 2
+SET LABELS ALL OFF BOTTOM ON LEFT ON
+
+TITLE TOP 'θ = 0°'
+SET ORDER X Y
+1 1
+2 4
+3 9
+JOIN
+
+NEW FRAME
+TITLE TOP 'θ = 15°'
+SET ORDER X Y
+1 2
+2 5
+3 7
+JOIN
+
+NEW FRAME
+TITLE TOP 'θ = 30°'
+SET ORDER X Y
+1 3
+2 4
+3 5
+JOIN
+
+NEW FRAME
+TITLE TOP 'θ = 45°'
+SET ORDER X Y
+1 4
+2 3
+3 2
+JOIN

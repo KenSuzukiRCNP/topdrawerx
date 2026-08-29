@@ -2,9 +2,9 @@
 
 import pytest
 
-from tdx import Session
-from tdx.charsets import resolve_symbol
-from tdx.text import apply_case
+from topdrawerx import Session
+from topdrawerx.charsets import resolve_symbol
+from topdrawerx.text import apply_case
 
 
 def run(script: str) -> Session:
