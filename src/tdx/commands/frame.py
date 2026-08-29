@@ -23,5 +23,15 @@ def cmd_new(ctx: Context, args: list[Token]) -> None:
 
 @COMMANDS.define("CLEAR", min_abbrev=3, usage="CLEAR")
 def cmd_clear(ctx: Context, args: list[Token]) -> None:
-    """Forget the data accumulated so far without drawing it."""
+    """Start a new frame keeping every setting, titles included.
+
+    The manual's meaning: clear the screen, the next plot uses the same
+    parameters.  ``NEW FRAME`` is the one that starts fresh.
+    """
+    ctx.new_frame(keep=True)
+
+
+@COMMANDS.define("FLUSH", min_abbrev=3, usage="FLUSH")
+def cmd_flush(ctx: Context, args: list[Token]) -> None:
+    """Throw away the data accumulated so far without drawing it."""
     ctx.buffer.clear()

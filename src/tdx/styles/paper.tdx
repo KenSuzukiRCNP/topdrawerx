@@ -1,0 +1,9 @@
+! paper -- a single-column journal figure: small, quiet, monochrome.
+SET FONT DUPLEX SIZE 10
+SET COLOR black
+SET PALETTE none
+SET WIDTH 1.0
+SET SYMBOL circle
+SET SIZE 4
+SET TICKS SIZE 0.05 LONG 2.5 IN ALL ON PERMANENT
+SET LABELS SIZE 9 ALL OFF BOTTOM ON LEFT ON PERMANENT

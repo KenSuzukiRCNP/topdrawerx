@@ -142,11 +142,15 @@ def set_pattern(ctx: Context, args: list[Token]) -> None:
 
 @SETTERS.define("COLOR", min_abbrev=3, usage="SET COLOR <name>")
 def set_color(ctx: Context, args: list[Token]) -> None:
-    """Set the drawing colour (any CSS/matplotlib colour name or #rrggbb)."""
+    """Set the drawing colour (any CSS/matplotlib colour name or #rrggbb).
+
+    An explicit colour wins over a palette, so this also turns cycling off.
+    """
     words = [t.text for t in args if t.is_word or t.is_string]
     if not words:
         raise ArgumentError("SET COLOR needs a colour name")
     ctx.state.style.color = words[0].lower()
+    ctx.state.palette = "none"
 
 
 @SETTERS.define("SIZE", min_abbrev=3, usage="SET SIZE <points>")
@@ -202,16 +206,52 @@ _inert("DEVICE", "the output format comes from the file name")
 _inert("INTENSITY", "use SET WIDTH instead")
 
 
-@SETTERS.define("FONT", min_abbrev=3, usage="SET FONT DUPLEX|SIMPLEX|<family>")
+@SETTERS.define("FONT", min_abbrev=3, usage="SET FONT [DUPLEX|SIMPLEX|<family>] [SIZE <points>]")
 def set_font(ctx: Context, args: list[Token]) -> None:
-    """Choose the font family for titles and labels.
+    """Choose the font family, and optionally the base text size.
 
     The plotter font names still work — DUPLEX and TRIPLEX mean serif, SIMPLEX
     and EXTENDED mean plain — and anything else is passed to matplotlib as a
-    family name, so ``SET FONT Helvetica`` does what it looks like.
+    family name, so ``SET FONT Helvetica SIZE 13`` does what it looks like.
     """
+    name: str | None = None
+    expect_size = False
+    for tok in args:
+        if tok.is_number:
+            if not expect_size:
+                raise ArgumentError("SET FONT: say SIZE before the number")
+            ctx.state.style.font_size = tok.value
+            expect_size = False
+        elif tok.upper == "SIZE":
+            expect_size = True
+        else:
+            name = tok.text
+    if expect_size:
+        raise ArgumentError("SET FONT SIZE needs a number")
+    if name is not None:
+        ctx.state.style.font = FONT_ALIASES.get(name.upper(), name)
+    elif ctx.state.style.font_size is None:
+        raise ArgumentError("SET FONT needs a name or a size, e.g. SET FONT DUPLEX")
+
+
+@SETTERS.define("STYLE", min_abbrev=3, usage="SET STYLE <name>")
+def set_style(ctx: Context, args: list[Token]) -> None:
+    """Load a style — a saved set of SET commands.  SET STYLE with no name lists them."""
+    from ..styles import apply_style, list_styles
+
     words = [t.text for t in args if t.is_word or t.is_string]
     if not words:
-        raise ArgumentError("SET FONT needs a name, e.g. SET FONT DUPLEX")
-    name = words[0]
-    ctx.state.style.font = FONT_ALIASES.get(name.upper(), name)
+        raise ArgumentError("SET STYLE needs a name; available: " + ", ".join(list_styles()))
+    apply_style(ctx, words[0])
+
+
+@SETTERS.define("PALETTE", min_abbrev=3, usage="SET PALETTE NONE|OKABE|BRIGHT|GRAYS")
+def set_palette(ctx: Context, args: list[Token]) -> None:
+    """Cycle a colour per dataset.  SET COLOR turns cycling off again."""
+    from ..palettes import PALETTE_NAMES
+
+    words = [t.text for t in args if t.is_word]
+    if not words:
+        raise ArgumentError("SET PALETTE needs a name: " + ", ".join(n.lower() for n in PALETTE_NAMES))
+    ctx.state.palette = choice(words[0], PALETTE_NAMES, "palette")
+    ctx.state.palette_index = -1

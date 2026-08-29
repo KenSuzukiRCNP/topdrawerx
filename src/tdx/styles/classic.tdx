@@ -1,0 +1,13 @@
+! classic -- the TopDrawer look, and tdx's default.
+! Black on white, serif, ticks inward on all four sides.
+SET FONT DUPLEX
+SET COLOR black
+SET PALETTE none
+SET WIDTH 1.2
+SET PATTERN solid
+SET SYMBOL circle
+SET SIZE 5
+SET FILL OFF
+SET HATCH none
+SET TICKS SIZE 0.1 LONG 3 IN ALL ON PERMANENT
+SET LABELS ALL OFF BOTTOM ON LEFT ON PERMANENT

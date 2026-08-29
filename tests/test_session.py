@@ -159,3 +159,31 @@ def test_histogram_uses_bin_edges():
     assert poly.x[0] == pytest.approx(0.5)
     assert poly.x[-1] == pytest.approx(3.5)
     assert poly.y[:2] == [5.0, 5.0]
+
+
+def test_loading_a_big_file_is_linear_not_quadratic():
+    """A regression guard: this used to replay once per line and took minutes."""
+    import time
+
+    lines = ["SET ORDER X Y"] + [f"{i} {i * 0.5}" for i in range(5000)] + ["PLOT"]
+    session = Session()
+    started = time.perf_counter()
+    session.run("\n".join(lines))
+    elapsed = time.perf_counter() - started
+    assert len(session.frame.items[0].x) == 5000
+    assert elapsed < 2.0, f"loading 5000 points took {elapsed:.1f}s"
+
+
+def test_meta_commands_inside_a_script_see_the_lines_before_them():
+    """Batched loading must not reorder SHOW/LIST relative to the plot."""
+    session = Session()
+    messages = session.run("SET LIMITS X 0 9\nSHOW\nSET LIMITS X 0 3\n")
+    assert any("0 .. 9" in m for m in messages)
+    assert session.state.x.limits() == (0.0, 3.0)
+
+
+def test_a_bad_line_in_the_middle_of_a_batch_is_reported_by_source_line():
+    session = Session()
+    session.run("SET ORDER X Y\n1 2\nZONE 2 2\n2 3\nPLOT\n", lenient=True)
+    assert session.skipped and session.skipped[0].startswith("line 3:")
+    assert len(session.frame.items[0].x) == 2

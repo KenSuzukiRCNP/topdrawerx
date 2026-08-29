@@ -182,13 +182,60 @@ The per-data-point forms of `BOX` and `ARROW` are the point of those commands:
 systematic error boxes and upper limits are ordinary requests in a physics
 figure and tedious everywhere else.
 
+**M4** — speed, a key, and a look you can save:
+
+```
+SET STYLE TALK                        classic paper talk poster notebook,
+                                      or your own from ~/.config/tdx/styles
+SAVE STYLE 'ken'                      write the current settings out as one
+SET PALETTE OKABE                     a colour per dataset; SET COLOR turns it off
+SET FONT SIMPLEX SIZE 16              family and base text size
+PLOT
+LEGEND 'K⁻ beam'                      names what was just drawn
+LEGEND TOP LEFT BOX                   or AT 0.65 0.85, or OFF
+```
+
+`examples/styles.tdx` is one figure; change `TALK` to `PAPER` and it becomes a
+journal figure. A style *is* a tdx script of `SET` commands — that is the whole
+mechanism, which is why you can read one, write one, or save one.
+
+Colour cycling advances once per **dataset**, not once per verb, so `PLOT`
+followed by `JOIN` keeps one colour for the points and the line through them.
+
+Four commands changed meaning in M4 to match the manual:
+
+| | |
+| --- | --- |
+| `LIST` | lists the data points in the buffer (was: the command log) |
+| `HISTORY` | lists the command log |
+| `CLEAR` | starts a new frame keeping every setting |
+| `FLUSH` | throws away the data buffer (was: `CLEAR`) |
+| `STOP` | leaves, like `EXIT` and `QUIT` |
+
+And loading got fast. Reading a file used to replay the whole log after every
+line, which is quadratic: 1 000 points took 2.6 s and 10 000 took minutes.
+Loading is now batched into one replay — 10 000 points in about 70 ms — with a
+test to keep it that way. Interactive replay stays comfortable to ~10⁴ points
+(20 ms a command) and drags near 10⁵ (~1 s); if that becomes normal, the fix is
+to memoise parsed datasets, not to abandon replay.
+
 ## Next
 
-- **M4** — `ZONE` and `SET WINDOW` (multi-panel pages), colour palettes for
-  multi-dataset plots, `CIRCLE`/`ELLIPSE`, `IF`/`ELSE`, `SET FILE INPUT`
-  (include), macros.
-- **M5** — file-watch mode, a Jupyter cell magic, numpy datasets from the
+- **M5** — `ZONE` and `SET WINDOW`: several frames on one page, and with them
+  ratio panels.
+- **M6** — `FIT` (line, polynomial, gaussian, exponential) and `SPLINE`. numpy
+  does the polynomial work; scipy is imported lazily for the rest, so it stays
+  an optional dependency.
+- **M7** — `CONTOUR` and 3-D data: `SET ORDER X Y Z` with triplets or a plain
+  grid file as the way in, `SET PALETTE` for colour maps, TD mesh format only
+  as a legacy convenience.
+- **M8** — file-watch mode, a Jupyter cell magic, numpy datasets from the
   Python API.
+
+Not planned, by decision: control flow (`IF`, `REPEAT`, `DEFINE COMMAND`) —
+Python is the better scripting language and the API is the seam; HBOOK
+(`DEFINE HISTOGRAM`); `BARGRAPH`; and most of the data arithmetic, with
+`DIVIDE` held back in case ratio panels want it.
 
 ## Tests
 

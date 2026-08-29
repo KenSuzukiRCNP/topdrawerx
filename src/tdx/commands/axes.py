@@ -48,9 +48,13 @@ def _parse_sides(
     *numbers* maps a qualifier that takes a number (``SIZE``) to the attribute
     it sets; *extra* maps a bare qualifier (``IN``) to (attribute, value).
     """
-    selected: list[str] = []
+    pending: list[str] = []
     pending_number: str | None = None
-    switch: bool | None = None
+
+    def apply(switch: bool) -> None:
+        for side in pending or SIDES:
+            target.on[side] = switch
+        pending.clear()
 
     for tok in args:
         if tok.is_number:
@@ -64,10 +68,12 @@ def _parse_sides(
             pending_number = numbers[word]
             continue
         if word in SIDE_GROUPS:
-            selected.extend(SIDE_GROUPS[word])
+            pending.extend(SIDE_GROUPS[word])
             continue
         if word in ("ON", "OFF"):
-            switch = word == "ON"
+            # Each ON/OFF applies to the sides named since the last one, so
+            # "ALL OFF BOTTOM ON LEFT ON" means what it reads as.
+            apply(word == "ON")
             continue
         if word == "PERMANENT":
             target.permanent = True
@@ -80,13 +86,9 @@ def _parse_sides(
 
     if pending_number is not None:
         raise ArgumentError(f"SET {what} {pending_number.upper()} needs a number")
-    if switch is not None:
-        for side in selected or SIDES:
-            target.on[side] = switch
-    elif selected:
+    if pending:
         # "SET TICKS TOP" with no ON/OFF reads as turning it on.
-        for side in selected:
-            target.on[side] = True
+        apply(True)
 
 
 @SETTERS.define(

@@ -36,8 +36,25 @@ def cmd_help(ctx: Context, args: list[Token]) -> None:
         ctx.say(f"    {cmd.summary}")
 
 
-@COMMANDS.define("LIST", min_abbrev=3, usage="LIST", meta=True)
+@COMMANDS.define("LIST", min_abbrev=3, usage="LIST [<n>]", meta=True)
 def cmd_list(ctx: Context, args: list[Token]) -> None:
+    """List the data points currently in the buffer (as in the original)."""
+    buffer = ctx.buffer
+    if not buffer.rows:
+        ctx.say("(no data in the buffer)")
+        return
+    limit = int(next((t.value for t in args if t.is_number), 20))
+    ctx.say("  ".join(f"{role:>10}" for role in buffer.order))
+    for row in buffer.rows[:limit]:
+        ctx.say("  ".join(f"{value:>10g}" for value in row))
+    if len(buffer.rows) > limit:
+        ctx.say(f"... {len(buffer.rows) - limit} more (LIST {len(buffer.rows)} for all)")
+    if buffer.sealed:
+        ctx.say("(already drawn; the next data line starts a new set)")
+
+
+@COMMANDS.define("HISTORY", min_abbrev=6, usage="HISTORY", meta=True)
+def cmd_history(ctx: Context, args: list[Token]) -> None:
     """Show the commands that built the current picture."""
     session = ctx.session
     if session is None or not session.log:
@@ -97,9 +114,14 @@ def cmd_undo(ctx: Context, args: list[Token]) -> None:
     ctx.say(f"undid: {removed}" if removed else "nothing to undo")
 
 
-@COMMANDS.define("SAVE", min_abbrev=3, usage="SAVE '<file.pdf|.png|.svg|.tdx>'", meta=True)
+@COMMANDS.define(
+    "SAVE",
+    min_abbrev=3,
+    usage="SAVE '<file.pdf|.png|.svg|.tdx>' | SAVE STYLE '<name>'",
+    meta=True,
+)
 def cmd_save(ctx: Context, args: list[Token]) -> None:
-    """Write the figure, or the session as a runnable script.
+    """Write the figure, the session as a runnable script, or the current style.
 
     The file name decides which: a graphics suffix writes the picture, a
     script suffix writes the commands that made it.
@@ -109,6 +131,15 @@ def cmd_save(ctx: Context, args: list[Token]) -> None:
         raise ArgumentError("nothing to save")
     if not args:
         raise ArgumentError("SAVE needs a file name")
+    if args[0].is_word and args[0].upper == "STYLE":
+        from ..styles import save_style
+
+        rest = [t.text for t in args[1:]]
+        if not rest:
+            raise ArgumentError("SAVE STYLE needs a name, e.g. SAVE STYLE 'mine'")
+        path = save_style(ctx.state, rest[0])
+        ctx.say(f"wrote {path}")
+        return
     path = args[0].text
     ext = os.path.splitext(path)[1].lower()
     if ext in FIGURE_SUFFIXES:
@@ -134,4 +165,10 @@ def cmd_exit(ctx: Context, args: list[Token]) -> None:
 @COMMANDS.define("QUIT", min_abbrev=3, usage="QUIT", meta=True)
 def cmd_quit(ctx: Context, args: list[Token]) -> None:
     """Leave the program."""
+    cmd_exit(ctx, args)
+
+
+@COMMANDS.define("STOP", min_abbrev=3, usage="STOP", meta=True)
+def cmd_stop(ctx: Context, args: list[Token]) -> None:
+    """Leave the program (the original's word for it)."""
     cmd_exit(ctx, args)

@@ -21,6 +21,7 @@ are case-insensitive; strings keep their case and their Unicode.
 from __future__ import annotations
 
 import re
+from functools import lru_cache
 from dataclasses import dataclass
 from enum import Enum
 
@@ -141,17 +142,33 @@ def _word_or_number(word: str) -> Token:
     return Token(TokKind.NUMBER, word, value)
 
 
-def scan_line(raw: str, lineno: int | None = None) -> Line:
-    """Classify and tokenize a single line."""
+@lru_cache(maxsize=1 << 16)
+def classify(raw: str) -> tuple[LineKind, tuple[Token, ...]]:
+    """Tokenize and classify, cached.
+
+    Every replay re-reads the same lines, so the same strings are scanned over
+    and over.  Tokens are frozen, so sharing them between replays is safe, and
+    caching turns tokenizing into a dictionary lookup for the second and every
+    later replay of a data file.
+    """
     stripped = raw.strip()
     if not stripped:
-        return Line(LineKind.BLANK, raw, [], lineno)
+        return LineKind.BLANK, ()
     if stripped[0] in COMMENT_PREFIXES:
-        return Line(LineKind.COMMENT, raw, [], lineno)
-    tokens = tokenize(raw, lineno)
+        return LineKind.COMMENT, ()
+    tokens = tuple(tokenize(raw))
     if tokens and all(t.is_number for t in tokens):
-        return Line(LineKind.DATA, raw, tokens, lineno)
-    return Line(LineKind.COMMAND, raw, tokens, lineno)
+        return LineKind.DATA, tokens
+    return LineKind.COMMAND, tokens
+
+
+def scan_line(raw: str, lineno: int | None = None) -> Line:
+    """Classify and tokenize a single line."""
+    try:
+        kind, tokens = classify(raw)
+    except LexError as exc:
+        raise LexError(exc.message, lineno) from None
+    return Line(kind, raw, list(tokens), lineno)
 
 
 def scan(text: str) -> list[Line]:

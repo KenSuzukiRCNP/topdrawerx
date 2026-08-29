@@ -76,3 +76,15 @@ def test_bad_qualifier_is_an_error():
 def test_size_without_a_number_is_an_error():
     with pytest.raises(ArgumentError):
         Session().execute("SET TICKS SIZE")
+
+
+def test_side_switches_apply_in_sequence():
+    """ALL OFF BOTTOM ON LEFT ON means what it reads as, in one command."""
+    labels = run("SET LABELS ALL OFF BOTTOM ON LEFT ON\n").state.labels
+    assert labels.on == {"TOP": False, "BOTTOM": True, "LEFT": True, "RIGHT": False}
+
+
+def test_ticks_and_labels_are_independent():
+    session = run("SET TICKS ALL ON\nSET LABELS ALL OFF BOTTOM ON\n")
+    assert all(session.state.ticks.on.values())
+    assert session.state.labels.on["TOP"] is False

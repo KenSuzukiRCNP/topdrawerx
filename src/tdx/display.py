@@ -18,7 +18,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from .state import Labels, State, TITLE_SLOTS, Ticks
+from .state import Labels, Legend, State, TITLE_SLOTS, Ticks
 
 
 @dataclass
@@ -28,6 +28,7 @@ class Polyline:
     color: str = "black"
     width: float = 1.2
     dash: str = "solid"
+    label: str | None = None
     kind: str = field(default="polyline", init=False)
 
     def points(self) -> tuple[list[float], list[float]]:
@@ -41,6 +42,7 @@ class Polyline:
             "color": self.color,
             "width": self.width,
             "dash": self.dash,
+            "label": self.label,
         }
 
 
@@ -52,6 +54,7 @@ class Markers:
     size: float = 5.0
     color: str = "black"
     fill: bool = False
+    label: str | None = None
     kind: str = field(default="markers", init=False)
 
     def points(self) -> tuple[list[float], list[float]]:
@@ -66,6 +69,7 @@ class Markers:
             "size": self.size,
             "color": self.color,
             "fill": self.fill,
+            "label": self.label,
         }
 
 
@@ -112,6 +116,7 @@ class Polygon:
     dash: str = "solid"
     facecolor: str | None = None
     hatch: str = "none"
+    label: str | None = None
     kind: str = field(default="polygon", init=False)
 
     def points(self) -> tuple[list[float], list[float]]:
@@ -127,6 +132,7 @@ class Polygon:
             "dash": self.dash,
             "facecolor": self.facecolor,
             "hatch": self.hatch,
+            "label": self.label,
         }
 
 
@@ -240,8 +246,10 @@ class Frame:
     ylog: bool = False
     titles: dict[str, str] = field(default_factory=dict)
     font: str = "serif"
+    font_size: float | None = None
     ticks: Ticks = field(default_factory=Ticks)
     labels: Labels = field(default_factory=Labels)
+    legend: Legend = field(default_factory=Legend)
 
     def add(self, item: Item) -> None:
         self.items.append(item)
@@ -262,8 +270,10 @@ class Frame:
         self.ylog = state.y.log
         self.titles = {k: v for k, v in state.titles.items() if k in TITLE_SLOTS}
         self.font = state.style.font
+        self.font_size = state.style.font_size
         self.ticks = state.ticks.copy()
         self.labels = state.labels.copy()
+        self.legend = state.legend.copy()
 
     # -- limits ---------------------------------------------------------
     def data_bounds(self) -> tuple[float, float, float, float] | None:
@@ -295,8 +305,10 @@ class Frame:
             "auto_ylim": self.ylim is None,
             "titles": dict(self.titles),
             "font": self.font,
+            "font_size": self.font_size,
             "ticks": self.ticks.to_dict(),
             "labels": self.labels.to_dict(),
+            "legend": self.legend.to_dict(),
             "items": [item.to_dict() for item in self.items],
         }
 

@@ -15,7 +15,7 @@ from ._util import choice
 from .setcmd import DASH_NAMES, symbol_from
 
 
-def _errorbars(ctx: Context, data) -> None:
+def _errorbars(ctx: Context, data, color: str) -> None:
     dx, dy = data.dx, data.dy
     if dx is None and dy is None:
         return
@@ -26,7 +26,7 @@ def _errorbars(ctx: Context, data) -> None:
             y=data.y,
             dx=dx,
             dy=dy,
-            color=style.color,
+            color=color,
             width=max(style.width * 0.8, 0.6),
         )
     )
@@ -37,18 +37,19 @@ def cmd_plot(ctx: Context, args: list[Token]) -> None:
     """Draw the data as symbols, with error bars if DX/DY were given."""
     data = ctx.buffer.snapshot()
     style = ctx.state.style
+    color = ctx.pen()
     symbol = style.symbol
     for tok in args:
         if tok.is_word or tok.is_number:
             symbol = symbol_from(tok.text)
-    _errorbars(ctx, data)
+    _errorbars(ctx, data, color)
     ctx.frame.add(
         Markers(
             x=data.x,
             y=data.y,
             symbol=symbol,
             size=style.size,
-            color=style.color,
+            color=color,
             fill=style.fill,
         )
     )
@@ -60,12 +61,13 @@ def cmd_join(ctx: Context, args: list[Token]) -> None:
     """Connect the data points with a line."""
     data = ctx.buffer.snapshot()
     style = ctx.state.style
+    color = ctx.pen()
     dash = style.dash
     for tok in args:
         if tok.is_word:
             dash = choice(tok.text, DASH_NAMES, "pattern")
     ctx.frame.add(
-        Polyline(x=data.x, y=data.y, color=style.color, width=style.width, dash=dash)
+        Polyline(x=data.x, y=data.y, color=color, width=style.width, dash=dash)
     )
     ctx.buffer.seal()
 
@@ -85,6 +87,7 @@ def cmd_histogram(ctx: Context, args: list[Token]) -> None:
     """Draw the data as a step histogram; X values are bin centres."""
     data = ctx.buffer.snapshot()
     style = ctx.state.style
+    color = ctx.pen()
     filled = style.fill
     for tok in args:
         if tok.is_word:
@@ -106,17 +109,17 @@ def cmd_histogram(ctx: Context, args: list[Token]) -> None:
             Polygon(
                 x=[xs[0], *xs, xs[-1]],
                 y=[0.0, *ys, 0.0],
-                color=style.color,
+                color=color,
                 width=style.width,
                 dash=style.dash,
-                facecolor=style.color if (filled and style.hatch == "none") else "none",
+                facecolor=color if (filled and style.hatch == "none") else "none",
                 hatch=style.hatch,
             )
         )
     else:
         ctx.frame.add(
-            Polyline(x=xs, y=ys, color=style.color, width=style.width, dash=style.dash)
+            Polyline(x=xs, y=ys, color=color, width=style.width, dash=style.dash)
         )
     if data.dy is not None:
-        _errorbars(ctx, data)
+        _errorbars(ctx, data, color)
     ctx.buffer.seal()

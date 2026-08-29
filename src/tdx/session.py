@@ -11,9 +11,12 @@ the whole log into a fresh display list.  Consequences:
 * the interactive session *is* a script: ``SAVE work.tdx`` writes it out and
   it runs unchanged in batch mode.
 
-Replay is cheap (microseconds for a typical frame), and its cost is bounded by
-the size of the log, not by the data -- data lives in the log as text and is
-re-parsed, which for interactive work is nothing.
+Replay costs one pass over the log.  For a typical frame that is microseconds;
+it stays comfortable to about 10^4 data points (~20 ms per command) and starts
+to drag near 10^5 (~1 s), because the data lives in the log as text and is
+re-read each time.  Loading is batched (see :meth:`Session.run`) so reading a
+file is linear, not quadratic.  If very large datasets become normal, the fix
+is to memoise parsed datasets per log slice rather than to abandon replay.
 """
 
 from __future__ import annotations
@@ -23,7 +26,7 @@ from dataclasses import dataclass, field
 from .data import DataBuffer
 from .display import Frame
 from .errors import TdxError
-from .lexer import Line, LineKind, scan_line
+from .lexer import LineKind, classify, scan_line
 from .registry import COMMANDS
 from .state import State
 
@@ -56,10 +59,32 @@ class Context:
     def say(self, message: str) -> None:
         self.messages.append(message)
 
-    def new_frame(self) -> None:
-        """Close the current frame and start the next one."""
+    def pen(self) -> str:
+        """The colour this drawing verb should use.
+
+        With a palette on, each *dataset* takes the next colour — not each
+        verb, so the ``PLOT`` then ``JOIN`` idiom keeps one colour for the
+        points and the line through them.  A fresh dataset is one the buffer
+        has not yet been drawn from.
+        """
+        from .palettes import color_at
+
+        state = self.state
+        if state.palette == "none":
+            return state.style.color
+        if not self.buffer.sealed:
+            state.palette_index += 1
+        return color_at(state.palette, max(state.palette_index, 0)) or state.style.color
+
+    def new_frame(self, keep: bool = False) -> None:
+        """Close the current frame and start the next one.
+
+        With *keep* the settings carry over untouched — limits, titles and all
+        — which is what ``CLEAR`` means; otherwise the per-frame settings go
+        back to their defaults, which is what ``NEW FRAME`` means.
+        """
         self.frame.apply_state(self.state)
-        self.state = self.state.next_frame()
+        self.state = self.state.copy() if keep else self.state.next_frame()
         self.buffer.clear()
         self.last_title = None
         self.frames.append(Frame())
@@ -108,7 +133,15 @@ class Session:
         return []
 
     def run(self, script: str, lenient: bool = False) -> list[str]:
-        """Run a whole script, line by line.
+        """Run a whole script.
+
+        Loading is batched: the lines go into the log and the replay happens
+        once, not once per line.  A file of ten thousand data points is
+        otherwise ten thousand replays, which is quadratic and, at any real
+        data size, unusable.  Correctness is unaffected because nothing can
+        observe the picture until the batch ends -- with one exception, meta
+        commands (``SAVE``, ``SHOW``, ``LIST``), which look at the current
+        state and therefore close the batch before they run.
 
         With ``lenient=True`` a line that fails does not stop the run: it is
         replaced in the log by a comment recording why it was skipped, and the
@@ -118,16 +151,74 @@ class Session:
         the omission visible, including in whatever ``SAVE`` writes out.
         """
         messages: list[str] = []
+        batch: list[tuple[int, str]] = []
+
         for lineno, raw in enumerate(script.splitlines(), start=1):
+            meta = self._meta_command(raw)
+            if meta is None:
+                batch.append((lineno, raw.rstrip("\n")))
+                continue
+            messages.extend(self._flush_batch(batch, lenient))
+            batch = []
+            ctx = self._live_context()
             try:
-                messages.extend(self.execute(raw))
+                meta.handler(ctx, scan_line(raw).tokens[1:])
             except TdxError as exc:
                 if not lenient:
                     raise
                 self.skipped.append(f"line {lineno}: {exc.message}  [{raw.strip()}]")
-                self.log.append(f"! tdx skipped ({exc.message}): {raw.strip()}")
-                self._refresh()
+            messages.extend(ctx.messages)
+
+        messages.extend(self._flush_batch(batch, lenient))
         return messages
+
+    def _meta_command(self, raw: str):
+        """The meta command on this line, if it is one, else ``None``."""
+        try:
+            line = scan_line(raw)
+        except TdxError:
+            return None
+        if line.kind is not LineKind.COMMAND:
+            return None
+        try:
+            cmd = COMMANDS.resolve(line.tokens[0].text)
+        except TdxError:
+            return None
+        return cmd if cmd.meta else None
+
+    def _flush_batch(self, batch: list[tuple[int, str]], lenient: bool) -> list[str]:
+        """Append a batch of lines to the log and replay once.
+
+        A line that fails is identified by the replay (which reports the log
+        position), dropped, and the replay retried -- so the cost is one replay
+        plus one per bad line, rather than one per line.
+        """
+        if not batch:
+            return []
+        start = len(self.log)
+        sources = [lineno for lineno, _ in batch]
+        self.log.extend(raw for _, raw in batch)
+
+        while True:
+            try:
+                self._refresh()
+                return []
+            except TdxError as exc:
+                index = (exc.lineno or 0) - 1
+                if index < start or index >= len(self.log):
+                    # Not one of ours: put the log back and let it surface.
+                    del self.log[start:]
+                    self._refresh()
+                    raise
+                raw = self.log[index]
+                lineno = sources[index - start]
+                if not lenient:
+                    del self.log[start:]
+                    self._refresh()
+                    exc.lineno = lineno  # report the script line, not the log slot
+                    raise
+                self.skipped.append(f"line {lineno}: {exc.message}  [{raw.strip()}]")
+                self.log[index] = f"! tdx skipped ({exc.message}): {raw.strip()}"
 
     def undo(self) -> str | None:
         """Remove the last recorded line.  Returns it, or ``None`` if empty."""
@@ -176,15 +267,17 @@ def replay(lines: list[str], session: "Session | None" = None) -> Replay:
     """Execute *lines* from a clean state and return the resulting frames."""
     ctx = Context(state=State(), buffer=DataBuffer(), frames=[Frame()], session=session)
     for lineno, raw in enumerate(lines, start=1):
-        line: Line = scan_line(raw, lineno)
+        # The cached classifier rather than scan_line: replay runs over the
+        # same lines again and again, and this is the hot loop.
+        kind, tokens = classify(raw)
         ctx.lineno = lineno
-        if line.kind in (LineKind.BLANK, LineKind.COMMENT):
+        if kind in (LineKind.BLANK, LineKind.COMMENT):
             continue
-        if line.kind is LineKind.DATA:
-            ctx.buffer.add_row(line.numbers, lineno)
+        if kind is LineKind.DATA:
+            ctx.buffer.add_row([t.value for t in tokens], lineno)
             continue
-        cmd = COMMANDS.resolve(line.tokens[0].text, lineno)
-        cmd.handler(ctx, line.tokens[1:])
+        cmd = COMMANDS.resolve(tokens[0].text, lineno)
+        cmd.handler(ctx, list(tokens[1:]))
     ctx.frame.apply_state(ctx.state)
     return Replay(frames=ctx.frames, state=ctx.state, buffer=ctx.buffer, warnings=ctx.warnings)
 

@@ -49,6 +49,8 @@ class Style:
     fill: bool = False
     #: Font family for every piece of text on the frame (SET FONT).
     font: str = "serif"
+    #: Base text size in points; None follows the backend default.
+    font_size: float | None = None
     #: Hatch pattern for filled areas (SET HATCH); "none" for a plain fill.
     hatch: str = "none"
 
@@ -104,6 +106,27 @@ class Labels:
 
 
 @dataclass
+class Legend:
+    """Where the key goes — ``LEGEND AT``, ``LEGEND TOP RIGHT``, ``LEGEND OFF``."""
+
+    on: bool = True
+    position: str = "best"
+    at: tuple[float, float] | None = None
+    box: bool = False
+
+    def copy(self) -> "Legend":
+        return Legend(self.on, self.position, self.at, self.box)
+
+    def to_dict(self) -> dict:
+        return {
+            "on": self.on,
+            "position": self.position,
+            "at": list(self.at) if self.at else None,
+            "box": self.box,
+        }
+
+
+@dataclass
 class State:
     x: Axis = field(default_factory=Axis)
     y: Axis = field(default_factory=Axis)
@@ -111,7 +134,13 @@ class State:
     style: Style = field(default_factory=Style)
     ticks: Ticks = field(default_factory=Ticks)
     labels: Labels = field(default_factory=Labels)
+    legend: Legend = field(default_factory=Legend)
     order: tuple[str, ...] = DEFAULT_ORDER
+    #: Colour cycling: the palette name, and how far through it we are.
+    #: "none" means every dataset is drawn in the current SET COLOR, which is
+    #: the original's behaviour and stays the default.
+    palette: str = "none"
+    palette_index: int = -1
     #: Settings accepted for compatibility and deliberately not acted on
     #: (SET DEVICE, SET INTENSITY on a device with no pens, ...).
     ignored: dict[str, str] = field(default_factory=dict)
@@ -124,7 +153,10 @@ class State:
             style=replace(self.style),
             ticks=self.ticks.copy(),
             labels=self.labels.copy(),
+            legend=self.legend.copy(),
             order=tuple(self.order),
+            palette=self.palette,
+            palette_index=self.palette_index,
             ignored=dict(self.ignored),
         )
 
@@ -143,4 +175,5 @@ class State:
             carried.ticks = Ticks()
         if not self.labels.permanent:
             carried.labels = Labels()
+        carried.palette_index = -1  # each frame starts at the top of the palette
         return carried

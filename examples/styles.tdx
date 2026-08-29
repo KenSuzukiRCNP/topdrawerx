@@ -1,0 +1,36 @@
+! styles.tdx -- milestone 4: a style, a palette and a legend.
+!     tdx examples/styles.tdx -o styles.pdf
+! Try changing TALK to PAPER, POSTER or NOTEBOOK and running it again.
+
+SET STYLE TALK
+
+TITLE TOP 'production near threshold'
+TITLE LEFT 'σ  (μb)'
+TITLE BOTTOM 'p  (GeV/c)'
+SET LIMITS X FROM 0 TO 20 Y FROM 0 TO 14
+
+! first dataset: takes the first palette colour
+SET ORDER X Y DY
+ 4.0   3.6   0.5
+ 6.0   6.2   0.6
+ 8.0   8.4   0.7
+10.0   9.7   0.8
+12.0  10.3   0.9
+PLOT
+LEGEND 'K$^-$ beam'
+JOIN
+LEGEND 'model'
+
+! second dataset: the next colour, points and line together
+SET SYMBOL SQUARE
+SET ORDER X Y DY
+ 4.0   1.8   0.4
+ 6.0   3.1   0.5
+ 8.0   4.4   0.5
+10.0   5.2   0.6
+12.0   5.6   0.7
+PLOT
+LEGEND 'π$^-$ beam'
+JOIN DASHES
+
+LEGEND TOP LEFT

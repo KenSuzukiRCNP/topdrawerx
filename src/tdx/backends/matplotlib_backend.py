@@ -124,6 +124,34 @@ def apply_axis_furniture(frame: Frame, ax) -> None:
     )
 
 
+def draw_legend(frame: Frame, ax) -> None:
+    """Draw the key, if anything asked to be in it.
+
+    Entries come from the artists themselves, so a legend line always carries
+    the symbol, colour and dash the data was drawn with.
+    """
+    legend = frame.legend
+    if not legend.on:
+        return
+    handles, labels = ax.get_legend_handles_labels()
+    if not handles:
+        return
+    kwargs = {
+        "frameon": legend.box,
+        # A bare "sans-serif" reads as a fontconfig pattern and trips on the
+        # hyphen; a list is taken as a family name.
+        "prop": {"family": [frame.font]},
+    }
+    if frame.font_size:
+        kwargs["fontsize"] = frame.font_size * 0.9
+    if legend.at:
+        kwargs["loc"] = "upper left"
+        kwargs["bbox_to_anchor"] = legend.at
+    else:
+        kwargs["loc"] = legend.position
+    ax.legend(handles, labels, **kwargs)
+
+
 def draw_frame(frame: Frame, ax) -> None:
     """Draw one :class:`~tdx.display.Frame` onto a matplotlib axes."""
     ax.clear()
@@ -136,6 +164,7 @@ def draw_frame(frame: Frame, ax) -> None:
                 linewidth=item.width,
                 color=item.color,
                 marker="",
+                label=item.label,
             )
         elif isinstance(item, Markers):
             marker = marker_for(item.symbol)
@@ -151,6 +180,7 @@ def draw_frame(frame: Frame, ax) -> None:
                 markerfacecolor=item.color if item.fill else "none",
                 markeredgecolor=item.color,
                 markeredgewidth=1.0,
+                label=item.label,
             )
         elif isinstance(item, ErrorBars):
             ax.errorbar(
@@ -172,6 +202,7 @@ def draw_frame(frame: Frame, ax) -> None:
                 linewidth=item.width,
                 linestyle=dash_for(item.dash),
                 hatch=HATCHES.get(item.hatch),
+                label=item.label,
             )
         elif isinstance(item, Box):
             from matplotlib.patches import Rectangle
@@ -249,6 +280,14 @@ def draw_frame(frame: Frame, ax) -> None:
         right.set_ylabel(to_matplotlib(titles["RIGHT"]), **font)
     for label in (*ax.get_xticklabels(), *ax.get_yticklabels()):
         label.set_fontfamily(frame.font)
+
+    if frame.font_size:
+        for text in (ax.title, ax.xaxis.label, ax.yaxis.label):
+            text.set_fontsize(frame.font_size)
+        if not frame.labels.size:
+            ax.tick_params(which="both", labelsize=frame.font_size * 0.9)
+
+    draw_legend(frame, ax)
 
 
 def make_figure(frame: Frame, figsize: tuple[float, float] = FIGSIZE):
