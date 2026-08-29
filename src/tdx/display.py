@@ -97,6 +97,7 @@ class Frame:
     xlog: bool = False
     ylog: bool = False
     titles: dict[str, str] = field(default_factory=dict)
+    font: str = "serif"
 
     def add(self, item: Item) -> None:
         self.items.append(item)
@@ -116,6 +117,7 @@ class Frame:
         self.xlog = state.x.log
         self.ylog = state.y.log
         self.titles = {k: v for k, v in state.titles.items() if k in TITLE_SLOTS}
+        self.font = state.style.font
 
     # -- limits ---------------------------------------------------------
     def data_bounds(self) -> tuple[float, float, float, float] | None:
@@ -150,6 +152,7 @@ class Frame:
             "auto_xlim": self.xlim is None,
             "auto_ylim": self.ylim is None,
             "titles": dict(self.titles),
+            "font": self.font,
             "items": [item.to_dict() for item in self.items],
         }
 

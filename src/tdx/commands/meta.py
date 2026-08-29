@@ -57,7 +57,8 @@ def cmd_show(ctx: Context, args: list[Token]) -> None:
     ctx.say(f"order   {' '.join(state.order)}   ({len(ctx.buffer.rows)} rows{drawn})")
     ctx.say(
         f"style   symbol={style.symbol} size={style.size:g} color={style.color} "
-        f"pattern={style.dash} width={style.width:g} fill={'on' if style.fill else 'off'}"
+        f"pattern={style.dash} width={style.width:g} fill={'on' if style.fill else 'off'} "
+        f"font={style.font}"
     )
     if state.titles:
         for slot, text in state.titles.items():

@@ -45,11 +45,20 @@ SYMBOLS = {
     "triangle": "^",
     "invtriangle": "v",
     "diamond": "D",
-    "cross": "x",
     "plus": "+",
     "star": "*",
     "dot": ".",
+    "octagon": "8",
     "none": "",
+    # The legacy marker set (manual §12.11).  "Fancy" shapes were the plain
+    # shape with a cross through it; matplotlib has no such marker, so those
+    # four are the nearest filled equivalents.
+    "cross": "+",
+    "diagcross": "x",
+    "fancydiamond": "d",
+    "fancysquare": "p",
+    "fancycross": "P",
+    "fancydiagcross": "X",
 }
 
 DASHES = {
@@ -132,17 +141,20 @@ def draw_frame(frame: Frame, ax) -> None:
         ax.yaxis.set_major_locator(MaxNLocator(steps=[1, 2, 5, 10]))
 
     titles = frame.titles
+    font = {"fontfamily": frame.font}
     if titles.get("TOP"):
-        ax.set_title(to_matplotlib(titles["TOP"]))
+        ax.set_title(to_matplotlib(titles["TOP"]), **font)
     if titles.get("BOTTOM"):
-        ax.set_xlabel(to_matplotlib(titles["BOTTOM"]))
+        ax.set_xlabel(to_matplotlib(titles["BOTTOM"]), **font)
     if titles.get("LEFT"):
-        ax.set_ylabel(to_matplotlib(titles["LEFT"]))
+        ax.set_ylabel(to_matplotlib(titles["LEFT"]), **font)
     if titles.get("RIGHT"):
         right = ax.twinx()
         right.set_ylim(*ylim)
         right.set_yticks([])
-        right.set_ylabel(to_matplotlib(titles["RIGHT"]))
+        right.set_ylabel(to_matplotlib(titles["RIGHT"]), **font)
+    for label in (*ax.get_xticklabels(), *ax.get_yticklabels()):
+        label.set_fontfamily(frame.font)
 
 
 def make_figure(frame: Frame, figsize: tuple[float, float] = FIGSIZE):

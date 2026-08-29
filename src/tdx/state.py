@@ -47,6 +47,8 @@ class Style:
     symbol: str = "circle"
     size: float = 5.0
     fill: bool = False
+    #: Font family for every piece of text on the frame (SET FONT).
+    font: str = "serif"
 
 
 @dataclass

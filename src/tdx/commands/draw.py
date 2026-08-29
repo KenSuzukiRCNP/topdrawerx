@@ -12,7 +12,7 @@ from ..lexer import Token
 from ..registry import COMMANDS
 from ..session import Context
 from ._util import choice
-from .setcmd import DASH_NAMES, SYMBOL_NAMES
+from .setcmd import DASH_NAMES, symbol_from
 
 
 def _errorbars(ctx: Context, data) -> None:
@@ -39,8 +39,8 @@ def cmd_plot(ctx: Context, args: list[Token]) -> None:
     style = ctx.state.style
     symbol = style.symbol
     for tok in args:
-        if tok.is_word:
-            symbol = choice(tok.text, SYMBOL_NAMES, "symbol")
+        if tok.is_word or tok.is_number:
+            symbol = symbol_from(tok.text)
     _errorbars(ctx, data)
     ctx.frame.add(
         Markers(

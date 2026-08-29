@@ -67,12 +67,37 @@ Accepted but superseded:
 
 | legacy | modern |
 | --- | --- |
-| `CASE` lines | write Unicode (`σ`, `Ξ`) or `$maths$` directly |
+| `CASE` lines | read and converted; write Unicode (`σ`, `Ξ`) or `$maths$` directly |
+| `SET SYMBOL 5O` | read; or `SET SYMBOL SQUARE` |
+| `SET FONT DUPLEX` | read as "serif"; or `SET FONT Helvetica` |
 | `SET DEVICE POSTSCRIPT` | the output file name |
 | `SET INTENSITY` (pen overstriking) | `SET WIDTH` |
-| `SET FONT DUPLEX` | real fonts (milestone 2) |
 | inline data only | `READ 'run042.csv'`, or numpy arrays via the Python API |
 | uppercase, fixed columns, 80 characters | case-insensitive, free-format, UTF-8 |
+
+### CASE lines
+
+A legacy title and its `CASE` line are converted into ordinary modern tdx text
+— Unicode with `$maths$` where a shift is needed — once, on the way in. Nothing
+downstream knows the difference:
+
+```
+TITLE TOP 'K2-3P R D2-3X0C12+3'      →   K⁻p → D⁻Ξ_c⁺
+CASE     ' X XL W  X XFXLXX X'
+```
+
+| case | set | tdx |
+| --- | --- | --- |
+| blank | Roman | the character as typed |
+| `L` | Roman lower case | lower-cased |
+| `G` / `F` | Greek | σ, π … / Σ, Π … |
+| `X` | sub/superscript | `0` `1` `2` `3` shift controls |
+| `M` `W` `K` | maths, arrows, physics | ±, ∞, →, ħ … |
+| `O` | markers | via `SET SYMBOL 5O` |
+
+Cyrillic, punctuation, typographic, theoretic, astronomical, drawing,
+movement, size and position sets are recognised, warned about, and left as
+typed — see `charsets.py`, which cites the manual section for each table.
 
 ## Two things that are deliberately not like the original
 
@@ -119,21 +144,26 @@ def cmd_arrow(ctx, args):
     ...
 ```
 
-## Milestone 1 — what works now
+## What works now
 
-`SET LIMITS / SCALE / ORDER / SYMBOL / PATTERN / COLOR / SIZE / WIDTH / FILL`,
-`PLOT`, `JOIN`, `HISTOGRAM`, `TITLE`, `READ`, `NEW FRAME`, `CLEAR`, and the meta
-commands `HELP`, `SHOW`, `LIST`, `UNDO`, `SAVE`, `EXIT`. Error bars come from
-`DX`/`DY` columns. Frames, log axes, automatic limits, PDF/PNG/SVG output.
+**M1** — `SET LIMITS / SCALE / ORDER / SYMBOL / PATTERN / COLOR / SIZE / WIDTH /
+FILL`, `PLOT`, `JOIN`, `HISTOGRAM`, `TITLE`, `READ`, `NEW FRAME`, `CLEAR`, and
+the meta commands `HELP`, `SHOW`, `LIST`, `UNDO`, `SAVE`, `EXIT`. Error bars
+from `DX`/`DY` columns. Frames, log axes, automatic limits, PDF/PNG/SVG.
+
+**M2** — `CASE` lines (Greek, sub/superscript, maths, arrows, physics), `MORE`,
+`SET FONT` with the plotter names, and the legacy marker codes on `SET SYMBOL`
+and `PLOT`. Symbol names: circle, square, triangle, invtriangle, diamond,
+cross, diagcross, plus, star, dot, octagon, fancydiamond, fancysquare,
+fancycross, fancydiagcross, none.
 
 ## Next
 
-- **M2** — `CASE` interpretation, real font selection, legacy symbol codes,
-  ticks and labels (`SET TICKS`, `SET LABELS`), fill patterns, text and boxes
-  and arrows on the frame.
-- **M3** — `ZONE` and `SET WINDOW` (multi-panel pages), colour palettes for
+- **M3** — ticks and labels (`SET TICKS`, `SET LABELS`), annotations (text at
+  data coordinates, `BOX`, `ARROW`), fill and hatch patterns.
+- **M4** — `ZONE` and `SET WINDOW` (multi-panel pages), colour palettes for
   multi-dataset plots, `IF`/`ELSE`, `SET FILE INPUT` (include), macros.
-- **M4** — file-watch mode, a Jupyter cell magic, numpy datasets from the
+- **M5** — file-watch mode, a Jupyter cell magic, numpy datasets from the
   Python API.
 
 ## Tests

@@ -39,6 +39,10 @@ class Context:
     warnings: list[str] = field(default_factory=list)
     messages: list[str] = field(default_factory=list)
     lineno: int | None = None
+    #: The title most recently given, as ``(slot, prefix, raw text)``.  CASE
+    #: and MORE act on it, and only on it — as in the original, where a CASE
+    #: line had to sit directly under its string.
+    last_title: tuple[str, str, str] | None = None
 
     @property
     def frame(self) -> Frame:
@@ -56,6 +60,7 @@ class Context:
         self.frame.apply_state(self.state)
         self.state = self.state.next_frame()
         self.buffer.clear()
+        self.last_title = None
         self.frames.append(Frame())
 
 

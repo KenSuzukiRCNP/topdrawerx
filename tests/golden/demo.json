@@ -3,6 +3,7 @@
     {
       "auto_xlim": false,
       "auto_ylim": false,
+      "font": "serif",
       "items": [
         {
           "color": "black",
@@ -117,6 +118,7 @@
     {
       "auto_xlim": true,
       "auto_ylim": false,
+      "font": "serif",
       "items": [
         {
           "color": "black",

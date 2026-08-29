@@ -7,28 +7,22 @@ unique prefix, so ``SET LIM X 0 10`` works.
 
 from __future__ import annotations
 
+from ..charsets import FONT_ALIASES, SYMBOL_NAMES, resolve_symbol
 from ..errors import ArgumentError
 from ..lexer import Token
 from ..registry import COMMANDS, SETTERS
 from ..session import Context
 from ._util import choice, numbers, strip_noise
 
-#: Symbol names understood in this milestone.  Legacy numeric codes (``5O``)
-#: are milestone 2, when the original tables can be checked properly.
-SYMBOL_NAMES = (
-    "CIRCLE",
-    "SQUARE",
-    "TRIANGLE",
-    "INVTRIANGLE",
-    "DIAMOND",
-    "CROSS",
-    "PLUS",
-    "STAR",
-    "DOT",
-    "NONE",
-)
-
 DASH_NAMES = ("SOLID", "DASHES", "DOTS", "DOTDASH")
+
+
+def symbol_from(word: str) -> str:
+    """Resolve a symbol given as a legacy code (``5O``) or by name."""
+    legacy = resolve_symbol(word)
+    if legacy is not None:
+        return legacy
+    return choice(word, SYMBOL_NAMES, "symbol")
 
 AXES = {"X": "x", "Y": "y"}
 
@@ -117,13 +111,13 @@ def set_order(ctx: Context, args: list[Token]) -> None:
 
 
 # -- style --------------------------------------------------------------
-@SETTERS.define("SYMBOL", min_abbrev=3, usage="SET SYMBOL <name>")
+@SETTERS.define("SYMBOL", min_abbrev=3, usage="SET SYMBOL <name>|<legacy code, e.g. 5O>")
 def set_symbol(ctx: Context, args: list[Token]) -> None:
-    """Choose the plotting symbol."""
-    words = [t.text for t in args if t.is_word or t.is_string]
+    """Choose the plotting symbol, by name or by legacy marker code."""
+    words = [t.text for t in args]
     if not words:
         raise ArgumentError(f"SET SYMBOL needs a name: {', '.join(s.lower() for s in SYMBOL_NAMES)}")
-    ctx.state.style.symbol = choice(words[0], SYMBOL_NAMES, "symbol")
+    ctx.state.style.symbol = symbol_from(words[0])
 
 
 @SETTERS.define("PATTERN", min_abbrev=3, usage="SET PATTERN SOLID|DASHES|DOTS|DOTDASH")
@@ -184,4 +178,18 @@ def _inert(name: str, note: str):
 
 _inert("DEVICE", "the output format comes from the file name")
 _inert("INTENSITY", "use SET WIDTH instead")
-_inert("FONT", "font selection lands in milestone 2")
+
+
+@SETTERS.define("FONT", min_abbrev=3, usage="SET FONT DUPLEX|SIMPLEX|<family>")
+def set_font(ctx: Context, args: list[Token]) -> None:
+    """Choose the font family for titles and labels.
+
+    The plotter font names still work — DUPLEX and TRIPLEX mean serif, SIMPLEX
+    and EXTENDED mean plain — and anything else is passed to matplotlib as a
+    family name, so ``SET FONT Helvetica`` does what it looks like.
+    """
+    words = [t.text for t in args if t.is_word or t.is_string]
+    if not words:
+        raise ArgumentError("SET FONT needs a name, e.g. SET FONT DUPLEX")
+    name = words[0]
+    ctx.state.style.font = FONT_ALIASES.get(name.upper(), name)
