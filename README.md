@@ -4,6 +4,7 @@
 [![PyPI](https://img.shields.io/pypi/v/topdrawerx)](https://pypi.org/project/topdrawerx/)
 [![python](https://img.shields.io/pypi/pyversions/topdrawerx)](https://pypi.org/project/topdrawerx/)
 [![licence](https://img.shields.io/badge/licence-MIT-blue)](LICENSE)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.22160025.svg)](https://doi.org/10.5281/zenodo.22160025)
 
 **A small command language for making publication figures — and the REPL to
 go with it.** Type a few lines, get a figure. The file stays readable, the
@@ -156,7 +157,9 @@ Python API is the seam — HBOOK, and most of the data arithmetic.
 
 This is a personal project, shared because others may find it useful. Bug
 reports and patches are welcome; replies may be slow, and there is no support
-promise. If you use it in a paper, there is a DOI in [CITATION.cff](CITATION.cff).
+promise. If you use it in a paper, cite it via its DOI:
+[10.5281/zenodo.22160025](https://doi.org/10.5281/zenodo.22160025)
+(see [CITATION.cff](CITATION.cff)).
 
 ## Licence and attribution
 

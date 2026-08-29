@@ -19,4 +19,6 @@ keywords:
   - particle physics
   - TopDrawer
 repository-code: "https://github.com/KenSuzukiRCNP/topdrawerx"
-doi: "10.5281/zenodo.22160026"
+# The concept DOI: always resolves to the newest version, so it
+# does not need changing at each release.
+doi: "10.5281/zenodo.22160025"

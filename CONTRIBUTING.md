@@ -25,7 +25,7 @@ python tools/render_examples.py   # only if an example or the look changed
 TDX_UPDATE_GOLDEN=1 python -m pytest tests/test_golden.py   # if the change is intended
 ```
 
-`docs/design.md` has the architecture and a short "adding a command" section.
+`docs/releasing.md` is the release runbook. `docs/design.md` has the architecture and a short "adding a command" section.
 New commands want three tests: the parse, what lands in the display list, and
 the error when it is used wrongly.
 

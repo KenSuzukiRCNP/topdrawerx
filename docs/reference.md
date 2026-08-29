@@ -2,9 +2,9 @@
 
 # Command reference
 
-topdrawerx 0.5.0. Commands are case-insensitive and may be abbreviated to
-the shortest unique prefix shown in **bold**; an ambiguous abbreviation is an
-error that names the candidates.
+Commands are case-insensitive and may be abbreviated to the shortest unique
+prefix shown in **bold**; an ambiguous abbreviation is an error that names the
+candidates.
 
 A line of nothing but numbers is data. A line starting with `!`, `#` or `;` is a
 comment, and `!` or `;` also start one part-way along a line.
